@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: "/favicon.svg",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
   title: "NexisAI — Yapay Zeka Reklam Platformu",
   description:

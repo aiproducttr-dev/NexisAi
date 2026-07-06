@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isForumHost } from "@/lib/constants/urls";
+import {
+  getAppBaseUrl,
+  getForumBaseUrl,
+  isAppHost,
+  isForumHost,
+} from "@/lib/constants/urls";
 
 function shouldRewriteToForum(pathname: string): boolean {
   return (
@@ -20,7 +25,24 @@ function copyCookies(from: NextResponse, to: NextResponse) {
 export async function updateSession(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const forumSite = isForumHost(host);
+  const appSite = isAppHost(host);
   const pathname = request.nextUrl.pathname;
+  const search = request.nextUrl.search;
+
+  // Ana site domaininde forum yolu açılırsa forum domainine yönlendir
+  if (appSite && pathname.startsWith("/forum")) {
+    const forumPath = pathname.replace(/^\/forum/, "") || "/";
+    const destination =
+      forumPath === "/"
+        ? getForumBaseUrl()
+        : `${getForumBaseUrl()}${forumPath}`;
+    return NextResponse.redirect(`${destination}${search}`);
+  }
+
+  // Forum domaininde panel ve içerik sayfaları ana siteye yönlendirilir
+  if (forumSite && (pathname.startsWith("/dashboard") || pathname.startsWith("/content"))) {
+    return NextResponse.redirect(`${getAppBaseUrl()}${pathname}${search}`);
+  }
 
   let supabaseResponse = NextResponse.next({ request });
 

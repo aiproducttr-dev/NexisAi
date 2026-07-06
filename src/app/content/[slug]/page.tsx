@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Brain, ArrowLeft } from "lucide-react";
+import BrandLogo from "@/components/layout/BrandLogo";
+import { ArrowLeft } from "lucide-react";
 
 export default async function ContentPage({
   params,
@@ -36,14 +37,7 @@ export default async function ContentPage({
             <ArrowLeft className="h-4 w-4" />
             NexisAI
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-              <Brain className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="text-sm font-bold">
-              Nexis<span className="text-indigo-400">AI</span>
-            </span>
-          </div>
+          <BrandLogo href="/" size="sm" />
         </div>
       </nav>
 

@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Orbitron } from "next/font/google";
 import { ArrowRight } from "lucide-react";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 import FuturisticScene3D from "@/components/landing/FuturisticScene3D";
 import LandingAppFeatures from "@/components/landing/LandingAppFeatures";
@@ -52,19 +52,7 @@ export default function HomeLanding() {
 
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="lf-animate-in flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-6">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Image
-              src="/favicon.svg"
-              alt="NexisAI"
-              width={160}
-              height={40}
-              className="h-8 w-auto shrink-0 sm:h-10 drop-shadow-[0_0_12px_rgba(139,92,246,0.55)]"
-              priority
-            />
-            <span className="lf-orbitron lf-logo-text truncate text-base font-bold tracking-[0.12em] sm:text-lg">
-              NEXIS AI
-            </span>
-          </div>
+          <BrandLogo href="/" size="md" priority />
           <Link
             href={REGISTER_HREF}
             className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-[#e2e8f0] shadow-[0_0_20px_rgba(139,92,246,0.15)] transition hover:border-violet-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.55)] sm:shrink-0"

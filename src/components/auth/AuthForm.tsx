@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppNav from "@/components/layout/AppNav";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -96,6 +97,9 @@ export default function AuthForm() {
           <div className="lf-card-border rounded-[20px] p-[2px]">
             <div className="lf-panel p-8 sm:p-10">
               <div className="mb-6 text-center">
+                <div className="mb-4 flex justify-center">
+                  <BrandLogo href="" size="lg" />
+                </div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
                   {mode === "register" ? "Kayıt" : "Giriş"}
                 </p>

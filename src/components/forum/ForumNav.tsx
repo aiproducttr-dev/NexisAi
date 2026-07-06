@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import BrandLogo from "@/components/layout/BrandLogo";
 import { getAppBaseUrl } from "@/lib/constants/urls";
 import { MessageSquare, LogOut } from "lucide-react";
 
@@ -15,23 +15,15 @@ export default function ForumNav({
   return (
     <header className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/forum" className="flex items-center gap-3">
-          <Image
-            src="/favicon.svg"
-            alt="NexisAI Form"
-            width={32}
-            height={32}
-            className="h-8 w-8"
-          />
-          <div>
-            <span className="lf-orbitron text-lg font-bold tracking-wide text-white">
-              NEXIS<span className="text-cyan-400">FORM</span>
+        <BrandLogo
+          href="/forum"
+          size="md"
+          suffix={
+            <span className="lf-orbitron hidden text-sm font-bold tracking-wide text-cyan-400 sm:inline">
+              FORM
             </span>
-            <p className="hidden text-[10px] uppercase tracking-[0.2em] text-[#64748b] sm:block">
-              Yapay Zeka Görünürlük Forumu
-            </p>
-          </div>
-        </Link>
+          }
+        />
 
         <div className="flex items-center gap-3 sm:gap-4">
           {userLabel && (

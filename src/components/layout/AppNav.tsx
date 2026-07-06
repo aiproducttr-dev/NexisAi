@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 interface AppNavProps {
   backLink?: { href: string; label: string };
@@ -22,18 +22,7 @@ export default function AppNav({ backLink, right, userLabel }: AppNavProps) {
               <span className="hidden sm:inline">{backLink.label}</span>
             </Link>
           ) : null}
-          <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Image
-              src="/favicon.svg"
-              alt="NexisAI"
-              width={160}
-              height={40}
-              className="h-8 w-auto shrink-0 sm:h-9 drop-shadow-[0_0_12px_rgba(139,92,246,0.55)]"
-            />
-            <span className="lf-orbitron lf-logo-text truncate text-base font-bold tracking-[0.12em] sm:text-lg">
-              NEXIS AI
-            </span>
-          </Link>
+          <BrandLogo href="/" size="md" />
         </div>
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-4">
