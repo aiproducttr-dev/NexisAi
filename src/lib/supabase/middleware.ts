@@ -12,7 +12,9 @@ function shouldRewriteToForum(pathname: string): boolean {
     !pathname.startsWith("/forum") &&
     !pathname.startsWith("/api") &&
     !pathname.startsWith("/_next") &&
-    !pathname.startsWith("/auth")
+    !pathname.startsWith("/auth") &&
+    pathname !== "/sitemap.xml" &&
+    pathname !== "/robots.txt"
   );
 }
 
