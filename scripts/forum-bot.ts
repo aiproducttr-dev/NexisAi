@@ -6,8 +6,9 @@
  *
  * Ortam (.env.local):
  *   FORUM_BOT_BASE_URL=https://nexisaiform.com
- *   FORUM_BOT_INTERVAL_MIN_MS=1800000   (varsayılan 30 dk)
- *   FORUM_BOT_INTERVAL_MAX_MS=5400000   (varsayılan 90 dk)
+ *   FORUM_BOT_INTERVAL_MIN_MS=300000   (varsayılan 5 dk)
+ *   FORUM_BOT_INTERVAL_MAX_MS=300000
+ *   FORUM_BOT_REPLY_DELAY_MS=10000     (cevaplar arası 10 sn)
  *   FORUM_BOT_PROXIES=http://...,socks5://...  (virgülle ayrılmış TR proxy)
  *   FORUM_BOT_PROXIES_FILE=/path/forum-bot-proxies.txt
  */
@@ -37,22 +38,9 @@ const baseUrl = (
   "https://nexisaiform.com"
 ).replace(/\/$/, "");
 
-const intervalMinMs = Number(process.env.FORUM_BOT_INTERVAL_MIN_MS || 30 * 60 * 1000);
-const intervalMaxMs = Number(process.env.FORUM_BOT_INTERVAL_MAX_MS || 90 * 60 * 1000);
-const firstReplyDelayMinMs = Number(
-  process.env.FORUM_BOT_FIRST_REPLY_DELAY_MIN_MS || 8 * 60 * 1000
-);
-const firstReplyDelayMaxMs = Number(
-  process.env.FORUM_BOT_FIRST_REPLY_DELAY_MAX_MS || 25 * 60 * 1000
-);
-const replyDelayMinMs = Number(
-  process.env.FORUM_BOT_REPLY_DELAY_MIN_MS || 5 * 60 * 1000
-);
-const replyDelayMaxMs = Number(
-  process.env.FORUM_BOT_REPLY_DELAY_MAX_MS || 18 * 60 * 1000
-);
-const typingDelayMinMs = Number(process.env.FORUM_BOT_TYPING_DELAY_MIN_MS || 8000);
-const typingDelayMaxMs = Number(process.env.FORUM_BOT_TYPING_DELAY_MAX_MS || 45000);
+const intervalMinMs = Number(process.env.FORUM_BOT_INTERVAL_MIN_MS || 5 * 60 * 1000);
+const intervalMaxMs = Number(process.env.FORUM_BOT_INTERVAL_MAX_MS || 5 * 60 * 1000);
+const replyDelayMs = Number(process.env.FORUM_BOT_REPLY_DELAY_MS || 10 * 1000);
 const daemonMode = process.argv.includes("--daemon");
 const proxyPool = loadProxyList();
 
@@ -80,6 +68,11 @@ function sleep(ms: number) {
 
 function randomBetween(min: number, max: number): number {
   return Math.floor(min + Math.random() * (max - min + 1));
+}
+
+function formatWait(ms: number): string {
+  if (ms < 60_000) return `${Math.round(ms / 1000)} sn`;
+  return `${Math.round(ms / 60000)} dk`;
 }
 
 function log(message: string) {
@@ -343,15 +336,9 @@ async function runCycle() {
 
   for (let i = 0; i < repliers.length; i++) {
     const replier = repliers[i]!;
-    const waitMs =
-      i === 0
-        ? randomBetween(firstReplyDelayMinMs, firstReplyDelayMaxMs)
-        : randomBetween(replyDelayMinMs, replyDelayMaxMs);
 
-    log(
-      `Cevap ${i + 1}/${replyCount} için bekleniyor (${Math.round(waitMs / 60000)} dk)...`
-    );
-    await sleep(waitMs);
+    log(`Cevap ${i + 1}/${replyCount} için bekleniyor (${formatWait(replyDelayMs)})...`);
+    await sleep(replyDelayMs);
 
     const reply = await generateForumReply({
       category: category.name,
@@ -362,8 +349,6 @@ async function runCycle() {
       replyIndex: i,
       totalReplies: replyCount,
     });
-
-    await sleep(randomBetween(typingDelayMinMs, typingDelayMaxMs));
 
     await postReply(replier, topic.id, reply.body);
     previousReplies.push(reply.body);
@@ -409,7 +394,7 @@ async function main() {
     }
 
     const waitMs = randomBetween(intervalMinMs, intervalMaxMs);
-    log(`Sonraki döngü ${Math.round(waitMs / 60000)} dk sonra...`);
+    log(`Sonraki konu ${formatWait(waitMs)} sonra...`);
     await sleep(waitMs);
   }
 }
