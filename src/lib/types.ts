@@ -59,3 +59,29 @@ export interface VisibilityMetrics {
   llmMentions: number;
   contentScore: number;
 }
+
+export interface ForumTopic {
+  id: string;
+  campaign_id: string;
+  slug: string;
+  title: string;
+  body: string;
+  category: string;
+  city: string;
+  business_name: string;
+  content_slug: string | null;
+  author_id: string;
+  reply_count: number;
+  created_at: string;
+  updated_at: string;
+  last_reply_at: string;
+}
+
+export interface ForumReply {
+  id: string;
+  topic_id: string;
+  author_id: string | null;
+  author_name: string;
+  body: string;
+  created_at: string;
+}

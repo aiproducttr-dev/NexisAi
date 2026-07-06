@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateCampaignContent } from "@/lib/ai/content-generator";
 import { calculateVisibilityMetrics } from "@/lib/constants/metrics";
+import { createForumTopicForCampaign } from "@/lib/forum/create-topic";
+import { forumTopicUrl } from "@/lib/constants/urls";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 
@@ -130,11 +132,24 @@ export async function POST(request: Request) {
       });
     }
 
+    await createForumTopicForCampaign({
+      campaignId: campaign.id,
+      slug,
+      title: `${city} ${category}: ${businessName}`,
+      body: generated.content,
+      category,
+      city,
+      businessName,
+      authorId: user.id,
+      contentSlug: slug,
+    });
+
     return NextResponse.json({
       success: true,
       campaignId: campaign.id,
       slug,
       title: generated.title,
+      forumUrl: forumTopicUrl(slug),
     });
   } catch (err) {
     console.error("Campaign creation error:", err);

@@ -1,7 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isForumHost } from "@/lib/constants/urls";
+
+function shouldRewriteToForum(pathname: string): boolean {
+  return (
+    !pathname.startsWith("/forum") &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/auth")
+  );
+}
+
+function copyCookies(from: NextResponse, to: NextResponse) {
+  from.cookies.getAll().forEach((cookie) => {
+    to.cookies.set(cookie.name, cookie.value);
+  });
+}
 
 export async function updateSession(request: NextRequest) {
+  const host = request.headers.get("host") ?? "";
+  const forumSite = isForumHost(host);
+  const pathname = request.nextUrl.pathname;
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -29,11 +49,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
-  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
-  const isCampaignNew = request.nextUrl.pathname.startsWith("/dashboard/new");
+  const isAuthPage = pathname.startsWith("/auth");
+  const isDashboard = pathname.startsWith("/dashboard");
 
-  if (!user && (isDashboard || isCampaignNew)) {
+  if (!user && isDashboard) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
     url.searchParams.set("redirect", request.nextUrl.pathname);
@@ -42,8 +61,16 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = forumSite ? "/forum" : "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  if (forumSite && shouldRewriteToForum(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/forum" : `/forum${pathname}`;
+    const rewriteResponse = NextResponse.rewrite(url);
+    copyCookies(supabaseResponse, rewriteResponse);
+    return rewriteResponse;
   }
 
   return supabaseResponse;

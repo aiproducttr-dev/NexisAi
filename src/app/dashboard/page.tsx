@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, ExternalLink, TrendingUp, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/constants/metrics";
+import { forumTopicUrl } from "@/lib/constants/urls";
 import DashboardActions from "@/components/dashboard/DashboardActions";
 import AppNav from "@/components/layout/AppNav";
 
@@ -43,13 +44,23 @@ export default async function DashboardPage({
         {params.created && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm text-emerald-300">
-              Kampanyanız başarıyla oluşturuldu! İçerik yayına alındı.{" "}
+              Kampanyanız başarıyla oluşturuldu! İçerik yayına alındı ve forum
+              konusu açıldı.{" "}
               <Link
                 href={`/content/${params.created}`}
                 className="font-semibold text-emerald-200 underline"
               >
-                İçeriği görüntüle →
+                İçerik
               </Link>
+              {" · "}
+              <a
+                href={forumTopicUrl(params.created)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-emerald-200 underline"
+              >
+                Forum konusu →
+              </a>
             </p>
           </div>
         )}
@@ -99,13 +110,24 @@ export default async function DashboardPage({
                       {campaign.status === "active" ? "Aktif" : campaign.status}
                     </span>
                     {campaign.content_slug && (
-                      <Link
-                        href={`/content/${campaign.content_slug}`}
-                        className="flex items-center gap-1 text-sm font-medium text-cyan-400 hover:underline"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        İçerik
-                      </Link>
+                      <>
+                        <Link
+                          href={`/content/${campaign.content_slug}`}
+                          className="flex items-center gap-1 text-sm font-medium text-cyan-400 hover:underline"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          İçerik
+                        </Link>
+                        <a
+                          href={forumTopicUrl(campaign.content_slug)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-sm font-medium text-violet-400 hover:underline"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Forum
+                        </a>
+                      </>
                     )}
                   </div>
                 </div>
