@@ -1,0 +1,36 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { LogOut } from "lucide-react";
+
+export default function DashboardActions() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        href="/dashboard/new"
+        className="hidden rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-[#e2e8f0] shadow-[0_0_16px_rgba(139,92,246,0.12)] transition hover:border-violet-500 hover:shadow-[0_0_24px_rgba(139,92,246,0.35)] sm:inline-flex"
+      >
+        Yeni Kampanya
+      </Link>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[#94a3b8] transition hover:border-cyan-500/30 hover:text-[#e2e8f0]"
+      >
+        <LogOut className="h-4 w-4" />
+        <span className="hidden sm:inline">Çıkış</span>
+      </button>
+    </div>
+  );
+}

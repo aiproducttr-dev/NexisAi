@@ -1,0 +1,312 @@
+.landing-futuristic {
+  --void: #050505;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --purple-glow: rgba(139, 92, 246, 0.55);
+  --cyan-glow: rgba(6, 182, 212, 0.45);
+  --lf-text: #e2e8f0;
+  --lf-muted: #94a3b8;
+  font-family: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  color: var(--lf-text);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+.landing-futuristic .lf-grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-attachment: fixed;
+  mask-image: radial-gradient(ellipse 80% 70% at 70% 50%, black 20%, transparent 70%);
+}
+
+@media (max-width: 767px) {
+  .landing-futuristic .lf-grid-overlay {
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 25%, transparent 75%);
+  }
+}
+
+.landing-futuristic .lf-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 30% 50%, transparent 0%, var(--void) 75%);
+}
+
+.landing-futuristic .lf-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-futuristic .lf-page {
+  position: relative;
+  z-index: 10;
+}
+
+.landing-futuristic .lf-orbitron {
+  font-family: var(--font-orbitron), "Orbitron", sans-serif;
+}
+
+@keyframes lf-fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lf-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes lf-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes lf-sweep {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(200%); }
+}
+
+@keyframes lf-border-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.lf-animate-in {
+  opacity: 0;
+  animation: lf-fade-slide-up 0.8s ease forwards;
+}
+
+.lf-animate-in-1 { animation-delay: 0.15s; }
+.lf-animate-in-2 { animation-delay: 0.3s; }
+.lf-animate-in-3 { animation-delay: 0.45s; }
+.lf-animate-in-4 { animation-delay: 0.6s; }
+.lf-animate-in-5 { animation-delay: 0.75s; }
+
+.lf-badge-dot {
+  animation: lf-pulse-dot 2s ease infinite;
+}
+
+.lf-btn-primary {
+  background: linear-gradient(135deg, var(--purple), #6366f1, var(--cyan));
+  background-size: 200% 200%;
+  animation: lf-shimmer 4s ease infinite;
+  box-shadow:
+    0 0 30px var(--purple-glow),
+    0 0 60px rgba(6, 182, 212, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.lf-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 60%
+  );
+  animation: lf-sweep 3s ease infinite;
+}
+
+.lf-card-border.lf-animate-in {
+  animation:
+    lf-border-flow 6s ease infinite,
+    lf-fade-slide-up 0.8s ease forwards;
+}
+
+.lf-card-1 { animation-delay: 0.1s, 0.1s; }
+.lf-card-2 { animation-delay: 0.25s, 0.25s; }
+.lf-card-3 { animation-delay: 0.4s, 0.4s; }
+
+.lf-stat-value {
+  text-shadow: 0 0 20px var(--cyan-glow);
+}
+
+.lf-logo-text {
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lf-title-gradient {
+  background: linear-gradient(135deg, #fff 0%, var(--cyan) 40%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lf-step-num {
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lf-feature-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.45),
+    rgba(6, 182, 212, 0.35),
+    rgba(139, 92, 246, 0.4)
+  );
+  box-shadow: 0 0 32px rgba(139, 92, 246, 0.08);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.lf-feature-glass:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 48px rgba(139, 92, 246, 0.2),
+    0 0 40px rgba(6, 182, 212, 0.12);
+}
+
+.lf-feature-inner {
+  background: rgba(8, 8, 14, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.lf-feature-icon {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.18);
+}
+
+.lf-feature-btn {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.05);
+}
+
+.lf-feature-btn:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.08);
+  box-shadow:
+    0 0 20px rgba(6, 182, 212, 0.12),
+    inset 0 0 16px rgba(139, 92, 246, 0.08);
+}
+
+.lf-feature-glow-line {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(6, 182, 212, 0.6),
+    rgba(139, 92, 246, 0.6),
+    transparent
+  );
+  opacity: 0.5;
+}
+
+.lf-feat-1 { animation-delay: 0.1s; }
+.lf-feat-2 { animation-delay: 0.22s; }
+.lf-feat-3 { animation-delay: 0.34s; }
+
+.lf-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.75rem 1rem;
+  color: #e2e8f0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lf-input::placeholder {
+  color: #64748b;
+}
+
+.lf-input:focus {
+  outline: none;
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.25), 0 0 20px rgba(6, 182, 212, 0.08);
+}
+
+.lf-select {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 8, 14, 0.95);
+  padding: 0.75rem 1rem;
+  color: #e2e8f0;
+}
+
+.lf-select:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.25);
+}
+
+.lf-panel {
+  border-radius: 1.25rem;
+  background: rgba(8, 8, 12, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lf-card-surface {
+  border-radius: 1.25rem;
+  background: rgba(8, 8, 12, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lf-card-surface:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.08);
+}
+
+.lf-metric-desc {
+  margin-top: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #94a3b8;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.25s ease,
+    margin-top 0.25s ease;
+}
+
+.lf-metric-card:hover .lf-metric-desc,
+.lf-metric-card:focus-within .lf-metric-desc {
+  margin-top: 0.75rem;
+  max-height: 10rem;
+  opacity: 1;
+}
+
+@media (max-width: 639px) {
+  .landing-futuristic .lf-btn-primary,
+  .landing-futuristic .lf-page a.rounded-xl {
+    min-height: 44px;
+  }
+}
