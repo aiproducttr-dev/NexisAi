@@ -3,9 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ForumNav from "@/components/forum/ForumNav";
 import ReplyForm from "@/components/forum/ReplyForm";
-import { getAppBaseUrl } from "@/lib/constants/urls";
 import type { ForumReply, ForumTopic } from "@/lib/types";
-import { ArrowLeft, ExternalLink, MapPin, MessageSquare, Tag } from "lucide-react";
+import { ArrowLeft, MapPin, MessageSquare, Tag } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +25,6 @@ export default async function ForumTopicPage({
 }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const appUrl = getAppBaseUrl();
 
   const {
     data: { user },
@@ -36,6 +34,7 @@ export default async function ForumTopicPage({
     .from("forum_topics")
     .select("*")
     .eq("slug", slug)
+    .eq("topic_type", "question")
     .single();
 
   if (!topic) notFound();
@@ -57,7 +56,6 @@ export default async function ForumTopicPage({
     : { data: null };
 
   const userLabel = profile?.full_name || user?.email;
-  const mainBody = typedTopic.body.split("---")[0].trim();
 
   return (
     <>
@@ -69,11 +67,14 @@ export default async function ForumTopicPage({
           className="mb-6 inline-flex items-center gap-2 text-sm text-[#94a3b8] transition hover:text-cyan-400"
         >
           <ArrowLeft className="h-4 w-4" />
-          Tüm konular
+          Tüm sorular
         </Link>
 
         <article className="lf-card-surface mb-6 p-6 sm:p-8">
           <div className="mb-4 flex flex-wrap gap-2">
+            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+              Soru
+            </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs text-violet-300">
               <Tag className="h-3 w-3" />
               {typedTopic.category}
@@ -82,47 +83,22 @@ export default async function ForumTopicPage({
               <MapPin className="h-3 w-3" />
               {typedTopic.city}
             </span>
-            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-              {typedTopic.business_name}
-            </span>
           </div>
 
           <h1 className="lf-orbitron mb-4 text-2xl font-bold text-white sm:text-3xl">
             {typedTopic.title}
           </h1>
 
-          <p className="mb-2 text-xs text-[#64748b]">
-            {formatDate(typedTopic.created_at)}
-            {typedTopic.topic_type === "question" ? (
-              <>
-                {" "}
-                ·{" "}
-                <span className="text-amber-300/90">
-                  {typedTopic.display_author_name || "Forum üyesi"} sordu
-                </span>
-              </>
-            ) : (
-              " · Kampanya konusu"
-            )}
+          <p className="mb-4 text-xs text-[#64748b]">
+            {formatDate(typedTopic.created_at)} ·{" "}
+            <span className="text-amber-300/90">
+              {typedTopic.display_author_name || "Forum üyesi"} sordu
+            </span>
           </p>
 
           <div className="prose prose-invert max-w-none whitespace-pre-wrap text-[#cbd5e1]">
-            {typedTopic.topic_type === "question"
-              ? typedTopic.body
-              : mainBody}
+            {typedTopic.body}
           </div>
-
-          {typedTopic.topic_type === "campaign" && typedTopic.content_slug && (
-            <Link
-              href={`${appUrl}/content/${typedTopic.content_slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-cyan-400 hover:underline"
-            >
-              Tam içeriği görüntüle
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          )}
         </article>
 
         <section className="mb-6">

@@ -27,6 +27,32 @@ export default async function DashboardPage({
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  const campaignIds = campaigns?.map((c) => c.id) ?? [];
+  const { data: forumTopics } =
+    campaignIds.length > 0
+      ? await supabase
+          .from("forum_topics")
+          .select("slug, campaign_id, title")
+          .in("campaign_id", campaignIds)
+          .eq("topic_type", "question")
+          .order("created_at", { ascending: true })
+      : { data: [] };
+
+  const forumTopicsByCampaign = new Map<string, { slug: string; title: string }[]>();
+  for (const topic of forumTopics ?? []) {
+    const list = forumTopicsByCampaign.get(topic.campaign_id) ?? [];
+    list.push({ slug: topic.slug, title: topic.title });
+    forumTopicsByCampaign.set(topic.campaign_id, list);
+  }
+
+  let createdForumTopics: { slug: string; title: string }[] = [];
+  if (params.created) {
+    const campaign = campaigns?.find((c) => c.content_slug === params.created);
+    if (campaign) {
+      createdForumTopics = forumTopicsByCampaign.get(campaign.id) ?? [];
+    }
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name")
@@ -44,23 +70,28 @@ export default async function DashboardPage({
         {params.created && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm text-emerald-300">
-              Kampanyanız başarıyla oluşturuldu! İçerik yayına alındı ve forum
-              konusu açıldı.{" "}
+              Kampanyanız başarıyla oluşturuldu!{" "}
               <Link
                 href={`/content/${params.created}`}
                 className="font-semibold text-emerald-200 underline"
               >
-                İçerik
+                İçerik NexisAI&apos;da yayında
               </Link>
-              {" · "}
-              <a
-                href={forumTopicUrl(params.created)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-emerald-200 underline"
-              >
-                Forum konusu →
-              </a>
+              {createdForumTopics.length > 0 && (
+                <>
+                  {" · "}
+                  <a
+                    href={forumTopicUrl(createdForumTopics[0].slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-emerald-200 underline"
+                  >
+                    {createdForumTopics.length > 1
+                      ? `${createdForumTopics.length} forum sorusu nexisaiform.com'da`
+                      : "Forum sorusu nexisaiform.com'da"}
+                  </a>
+                </>
+              )}
             </p>
           </div>
         )}
@@ -88,7 +119,12 @@ export default async function DashboardPage({
 
         {campaigns && campaigns.length > 0 ? (
           <div className="grid gap-4">
-            {campaigns.map((campaign) => (
+            {campaigns.map((campaign) => {
+              const campaignForumTopics =
+                forumTopicsByCampaign.get(campaign.id) ?? [];
+              const primaryForum = campaignForumTopics[0];
+
+              return (
               <div key={campaign.id} className="lf-card-surface p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -116,17 +152,22 @@ export default async function DashboardPage({
                           className="flex items-center gap-1 text-sm font-medium text-cyan-400 hover:underline"
                         >
                           <ExternalLink className="h-4 w-4" />
-                          İçerik
+                          NexisAI İçerik
                         </Link>
-                        <a
-                          href={forumTopicUrl(campaign.content_slug)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-sm font-medium text-violet-400 hover:underline"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Forum
-                        </a>
+                        {primaryForum && (
+                          <a
+                            href={forumTopicUrl(primaryForum.slug)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm font-medium text-violet-400 hover:underline"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Forum
+                            {campaignForumTopics.length > 1
+                              ? ` (${campaignForumTopics.length})`
+                              : ""}
+                          </a>
+                        )}
                       </>
                     )}
                   </div>
@@ -165,7 +206,8 @@ export default async function DashboardPage({
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         ) : (
           <div className="lf-card-border rounded-[20px] p-[2px]">

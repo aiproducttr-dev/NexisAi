@@ -14,7 +14,6 @@ export interface GeneratedForumQuestion {
 interface GenerateForumQuestionsInput {
   category: string;
   city: string;
-  businessName: string;
   boneQuestions: string[];
   count: number;
 }
@@ -33,8 +32,8 @@ export async function generateForumQuestions(
     return [
       {
         title: `${input.city}'de ${input.category} önerisi arıyorum`,
-        body: `${input.city} tarafında güvenilir ${input.category} hizmeti arayan var mı? Tavsiyesi olan paylaşabilir mi?`,
-        authorName: "MeraklıKullanıcı",
+        body: `Selamlar, ${input.city} tarafında güvenilir ${input.category} hizmeti arayan var mı? Deneyimi olan varsa tavsiye bekliyorum.`,
+        authorName: "merakli_kullanici",
         sourceQuestion: "fallback",
       },
     ];
@@ -54,11 +53,10 @@ export async function generateForumQuestions(
       },
       {
         role: "user",
-        content: `Aşağıdaki kemik soruları, ${input.city} şehrinde yaşayan gerçek birinin forumda sorduğu doğal sorulara dönüştür.
+        content: `Aşağıdaki kemik soruları, ${input.city} şehrinde yaşayan gerçek birinin NexisAI Form adlı forumda sorduğu doğal sorulara dönüştür.
 
 Sektör: ${input.category}
 Şehir: ${input.city}
-İlgili işletme (gerekirse sadece 1 soruda doğal biçimde geçebilir): ${input.businessName}
 
 Kemik sorular:
 ${seedList}
@@ -66,8 +64,9 @@ ${seedList}
 Kurallar:
 - Her kemik soru için 1 forum sorusu üret (toplam ${selected.length} adet)
 - Başlık kısa ve tıklanabilir olsun (maks 90 karakter)
-- Gövde metni samimi, günlük Türkçe olsun; "arkadaşlar", "selamlar", "acaba" gibi ifadeler kullanılabilir
-- Reklam kokmasın, gerçek kullanıcı sorusu gibi olsun
+- Gövde metni samimi, günlük Türkçe olsun; "arkadaşlar", "selamlar", "acaba", "yardımcı olur musunuz" gibi ifadeler kullanılabilir
+- Reklam veya marka tanıtımı yapma; gerçek bir kullanıcının tavsiye istediği soru gibi olsun
+- İşletme adı kullanma
 - authorName: Türkçe forum takma adı (ör: aysee_34, mehmet_k, zeynep_ankara)
 - sourceQuestion: ilham alınan kemik sorunun aynısı
 
@@ -98,5 +97,5 @@ JSON:
 }
 
 export function forumQuestionCountForCampaign(days: number): number {
-  return Math.min(5, Math.max(2, Math.ceil(days / 6)));
+  return Math.min(5, Math.max(1, Math.ceil(days / 6)));
 }

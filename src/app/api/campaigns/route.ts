@@ -8,7 +8,6 @@ import {
 import { calculateVisibilityMetrics } from "@/lib/constants/metrics";
 import {
   createForumQuestionTopics,
-  createForumTopicForCampaign,
 } from "@/lib/forum/create-topic";
 import { forumTopicUrl } from "@/lib/constants/urls";
 import { NextResponse } from "next/server";
@@ -139,43 +138,34 @@ export async function POST(request: Request) {
       });
     }
 
-    await createForumTopicForCampaign({
-      campaignId: campaign.id,
-      slug,
-      title: `${city} ${category}: ${businessName}`,
-      body: generated.content,
-      category,
-      city,
-      businessName,
-      authorId: user.id,
-      contentSlug: slug,
-    });
-
     const questionCount = forumQuestionCountForCampaign(days);
     const forumQuestions = await generateForumQuestions({
       category,
       city,
-      businessName,
       boneQuestions,
       count: questionCount,
     });
 
-    const questionsCreated = await createForumQuestionTopics(
-      campaign.id,
-      user.id,
-      category,
-      city,
-      businessName,
-      baseSlug,
-      forumQuestions
-    );
+    const { count: questionsCreated, slugs: forumSlugs } =
+      await createForumQuestionTopics(
+        campaign.id,
+        user.id,
+        category,
+        city,
+        businessName,
+        baseSlug,
+        forumQuestions
+      );
+
+    const primaryForumSlug = forumSlugs[0];
 
     return NextResponse.json({
       success: true,
       campaignId: campaign.id,
       slug,
       title: generated.title,
-      forumUrl: forumTopicUrl(slug),
+      contentUrl: `/content/${slug}`,
+      forumUrl: primaryForumSlug ? forumTopicUrl(primaryForumSlug) : null,
       forumQuestionsCreated: questionsCreated,
     });
   } catch (err) {

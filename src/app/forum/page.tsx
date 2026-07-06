@@ -31,6 +31,7 @@ export default async function ForumPage({
   let query = supabase
     .from("forum_topics")
     .select("*")
+    .eq("topic_type", "question")
     .order("last_reply_at", { ascending: false });
 
   if (params.category) {
@@ -75,9 +76,9 @@ export default async function ForumPage({
             NexisAI Form
           </h1>
           <p className="mt-3 max-w-2xl text-[#94a3b8]">
-            İşletmeler, sektör ve şehir bazında konular açıyor; kullanıcılar
-            deneyim ve önerilerini paylaşıyor. Kampanyalar otomatik olarak burada
-            konu oluşturur.
+            Kullanıcıların kategori ve şehir bazında sorduğu doğal sorular.
+            Kampanya başlatıldığında kemik soru havuzundan seçilen sorular,
+            yapay zeka ile insan diliyle burada konu olarak açılır.
           </p>
         </div>
 
@@ -103,8 +104,8 @@ export default async function ForumPage({
               Henüz konu yok
             </h2>
             <p className="mt-2 max-w-md text-sm text-[#94a3b8]">
-              NexisAI&apos;da kampanya başlatıldığında kategori ve şehir bilgisiyle
-              otomatik konu açılır.
+              NexisAI&apos;da kampanya başlatıldığında, kategoriye uygun kemik
+              sorular yapay zeka ile forum sorusuna dönüştürülür.
             </p>
           </div>
         )}
