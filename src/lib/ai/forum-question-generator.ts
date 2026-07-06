@@ -67,7 +67,7 @@ Kurallar:
 - Gövde metni samimi, günlük Türkçe olsun; "arkadaşlar", "selamlar", "acaba", "yardımcı olur musunuz" gibi ifadeler kullanılabilir
 - Reklam veya marka tanıtımı yapma; gerçek bir kullanıcının tavsiye istediği soru gibi olsun
 - İşletme adı kullanma
-- authorName: Türkçe forum takma adı (ör: aysee_34, mehmet_k, zeynep_ankara)
+- authorName: soruyu soran kişinin kullanıcı adı; isimsoyisim + sayı formatında (ör: ayseyilmaz34, mehmetkaya92) — şehir adı veya alt çizgi kullanma
 - sourceQuestion: ilham alınan kemik sorunun aynısı
 
 JSON:

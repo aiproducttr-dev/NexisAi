@@ -85,7 +85,14 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = forumSite ? "/forum" : "/dashboard";
+    const redirect = url.searchParams.get("redirect");
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      url.pathname = redirect;
+      url.search = "";
+    } else {
+      url.pathname = forumSite ? "/forum" : "/dashboard";
+      url.search = "";
+    }
     return NextResponse.redirect(url);
   }
 

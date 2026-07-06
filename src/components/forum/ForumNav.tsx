@@ -1,7 +1,7 @@
 import Link from "next/link";
 import BrandLogo from "@/components/layout/BrandLogo";
 import { getAppBaseUrl } from "@/lib/constants/urls";
-import { MessageSquare, LogOut } from "lucide-react";
+import { LogOut, MessageSquare, PlusCircle } from "lucide-react";
 
 export default function ForumNav({
   userLabel,
@@ -31,6 +31,13 @@ export default function ForumNav({
               {userLabel}
             </span>
           )}
+          <Link
+            href={isLoggedIn ? "/forum/new" : "/auth?mode=register&redirect=/forum/new"}
+            className="hidden items-center gap-1.5 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-300 transition hover:border-cyan-500/40 hover:text-cyan-200 sm:flex"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Soru sor
+          </Link>
           <Link
             href={`${appUrl}/dashboard`}
             className="hidden items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-sm text-[#94a3b8] transition hover:border-violet-500/30 hover:text-white sm:flex"

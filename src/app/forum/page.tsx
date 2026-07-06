@@ -3,7 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import ForumNav from "@/components/forum/ForumNav";
 import TopicCard from "@/components/forum/TopicCard";
 import ForumFilters from "@/components/forum/ForumFilters";
+import AskTopicCta from "@/components/forum/AskTopicCta";
+import ForumTopicCounter from "@/components/forum/ForumTopicCounter";
 import type { ForumTopic } from "@/lib/types";
+import Link from "next/link";
 import { MessagesSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -43,10 +46,12 @@ export default async function ForumPage({
 
   const { data: topics } = await query;
 
-  const { data: categories } = await supabase
-    .from("forum_topics")
-    .select("category")
-    .order("category");
+  const { data: categoryRows } = await supabase
+    .from("categories")
+    .select("name")
+    .order("name");
+
+  const allCategories = categoryRows?.map((c) => c.name) ?? [];
 
   const { data: cities } = await supabase
     .from("forum_topics")
@@ -54,7 +59,10 @@ export default async function ForumPage({
     .order("city");
 
   const uniqueCategories = [
-    ...new Set(categories?.map((c) => c.category) ?? []),
+    ...new Set([
+      ...allCategories,
+      ...(topics?.map((t) => t.category) ?? []),
+    ]),
   ].sort();
   const uniqueCities = [...new Set(cities?.map((c) => c.city) ?? [])].sort();
 
@@ -77,10 +85,13 @@ export default async function ForumPage({
           </h1>
           <p className="mt-3 max-w-2xl text-[#94a3b8]">
             Kullanıcıların kategori ve şehir bazında sorduğu doğal sorular.
-            Kampanya başlatıldığında kemik soru havuzundan seçilen sorular,
-            yapay zeka ile insan diliyle burada konu olarak açılır.
+            Üye olarak soru sorabilir veya kampanyalardan otomatik açılan
+            konuları okuyabilirsiniz.
           </p>
+          <ForumTopicCounter />
         </div>
+
+        <AskTopicCta loggedIn={!!user} />
 
         <Suspense fallback={null}>
           <ForumFilters
@@ -104,9 +115,15 @@ export default async function ForumPage({
               Henüz konu yok
             </h2>
             <p className="mt-2 max-w-md text-sm text-[#94a3b8]">
-              NexisAI&apos;da kampanya başlatıldığında, kategoriye uygun kemik
-              sorular yapay zeka ile forum sorusuna dönüştürülür.
+              İlk soruyu siz sorun veya NexisAI kampanyalarından otomatik açılan
+              konuları bekleyin.
             </p>
+            <Link
+              href={user ? "/forum/new" : "/auth?mode=register&redirect=/forum/new"}
+              className="lf-btn-primary mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              {user ? "Soru sor" : "Kayıt ol ve sor"}
+            </Link>
           </div>
         )}
       </main>

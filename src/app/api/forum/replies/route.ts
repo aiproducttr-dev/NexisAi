@@ -1,9 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { forumDisplayName } from "@/lib/forum/organic-topic";
+import { createClientFromRequest } from "@/lib/supabase/request-client";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    const supabase = await createClientFromRequest(request);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -44,8 +45,7 @@ export async function POST(request: Request) {
       .eq("id", user.id)
       .single();
 
-    const authorName =
-      profile?.full_name || profile?.email?.split("@")[0] || "Üye";
+    const authorName = forumDisplayName(profile?.full_name, profile?.email);
 
     const { data: reply, error } = await supabase
       .from("forum_replies")

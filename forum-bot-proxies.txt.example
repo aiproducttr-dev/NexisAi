@@ -1,0 +1,7 @@
+# Türkiye çıkışlı HTTP/SOCKS5 proxy listesi (her satır bir proxy)
+# Örnek:
+# http://kullanici:sifre@185.123.45.67:8080
+# socks5://kullanici:sifre@185.123.45.68:1080
+#
+# .env.local alternatifi:
+# FORUM_BOT_PROXIES=http://...,socks5://...
