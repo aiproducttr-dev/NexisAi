@@ -29,39 +29,28 @@ export default function AuthForm() {
 
     try {
       if (mode === "register") {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName },
-          },
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password,
+            fullName: fullName.trim(),
+          }),
         });
 
-        if (signUpError) throw signUpError;
+        const data = await res.json();
 
-        if (data.user) {
-          await supabase.from("profiles").upsert({
-            id: data.user.id,
-            full_name: fullName,
-            email,
-          });
-
-          if (!data.session) {
-            const res = await fetch("/api/auth/confirm", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId: data.user.id }),
-            });
-
-            if (res.ok) {
-              const { error: loginError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-              });
-              if (loginError) throw loginError;
-            }
-          }
+        if (!res.ok) {
+          throw new Error(data.error || "Kayıt oluşturulamadı");
         }
+
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+
+        if (loginError) throw loginError;
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -73,9 +62,16 @@ export default function AuthForm() {
       router.push(redirect);
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Giriş yapılırken bir hata oluştu"
-      );
+      const message =
+        err instanceof Error ? err.message : "Giriş yapılırken bir hata oluştu";
+
+      if (message.toLowerCase().includes("rate limit")) {
+        setError(
+          "Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyin."
+        );
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
