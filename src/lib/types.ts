@@ -71,6 +71,9 @@ export interface ForumTopic {
   business_name: string;
   content_slug: string | null;
   author_id: string;
+  topic_type: "campaign" | "question";
+  source_question: string | null;
+  display_author_name: string | null;
   reply_count: number;
   created_at: string;
   updated_at: string;

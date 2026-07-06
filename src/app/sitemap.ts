@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { getAppBaseUrl, getForumBaseUrl } from "@/lib/constants/urls";
+import { APP_URL, FORUM_URL } from "@/lib/constants/urls";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = getAppBaseUrl();
-  const forumUrl = getForumBaseUrl();
+  const baseUrl = APP_URL;
+  const forumUrl = FORUM_URL;
 
   const supabase = await createClient();
 
@@ -26,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
+    },
+    {
+      url: `${baseUrl}/auth`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
     },
     {
       url: forumUrl,

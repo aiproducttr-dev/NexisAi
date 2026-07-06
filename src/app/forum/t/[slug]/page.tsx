@@ -92,14 +92,27 @@ export default async function ForumTopicPage({
           </h1>
 
           <p className="mb-2 text-xs text-[#64748b]">
-            {formatDate(typedTopic.created_at)} · Kampanya konusu
+            {formatDate(typedTopic.created_at)}
+            {typedTopic.topic_type === "question" ? (
+              <>
+                {" "}
+                ·{" "}
+                <span className="text-amber-300/90">
+                  {typedTopic.display_author_name || "Forum üyesi"} sordu
+                </span>
+              </>
+            ) : (
+              " · Kampanya konusu"
+            )}
           </p>
 
           <div className="prose prose-invert max-w-none whitespace-pre-wrap text-[#cbd5e1]">
-            {mainBody}
+            {typedTopic.topic_type === "question"
+              ? typedTopic.body
+              : mainBody}
           </div>
 
-          {typedTopic.content_slug && (
+          {typedTopic.topic_type === "campaign" && typedTopic.content_slug && (
             <Link
               href={`${appUrl}/content/${typedTopic.content_slug}`}
               target="_blank"

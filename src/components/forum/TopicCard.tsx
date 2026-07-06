@@ -19,6 +19,11 @@ export default function TopicCard({ topic }: { topic: ForumTopic }) {
       className="lf-card-surface group block p-5 transition hover:-translate-y-0.5"
     >
       <div className="mb-3 flex flex-wrap gap-2">
+        {topic.topic_type === "question" ? (
+          <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">
+            Soru
+          </span>
+        ) : null}
         <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-0.5 text-xs text-violet-300">
           <Tag className="h-3 w-3" />
           {topic.category}
@@ -38,7 +43,9 @@ export default function TopicCard({ topic }: { topic: ForumTopic }) {
       </p>
 
       <div className="flex items-center justify-between text-xs text-[#64748b]">
-        <span className="font-medium text-[#94a3b8]">{topic.business_name}</span>
+        <span className="font-medium text-[#94a3b8]">
+          {topic.display_author_name || topic.business_name}
+        </span>
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1">
             <MessageSquare className="h-3.5 w-3.5" />

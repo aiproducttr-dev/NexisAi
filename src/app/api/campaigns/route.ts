@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateCampaignContent } from "@/lib/ai/content-generator";
+import {
+  forumQuestionCountForCampaign,
+  generateForumQuestions,
+} from "@/lib/ai/forum-question-generator";
 import { calculateVisibilityMetrics } from "@/lib/constants/metrics";
-import { createForumTopicForCampaign } from "@/lib/forum/create-topic";
+import {
+  createForumQuestionTopics,
+  createForumTopicForCampaign,
+} from "@/lib/forum/create-topic";
 import { forumTopicUrl } from "@/lib/constants/urls";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
@@ -144,12 +151,32 @@ export async function POST(request: Request) {
       contentSlug: slug,
     });
 
+    const questionCount = forumQuestionCountForCampaign(days);
+    const forumQuestions = await generateForumQuestions({
+      category,
+      city,
+      businessName,
+      boneQuestions,
+      count: questionCount,
+    });
+
+    const questionsCreated = await createForumQuestionTopics(
+      campaign.id,
+      user.id,
+      category,
+      city,
+      businessName,
+      baseSlug,
+      forumQuestions
+    );
+
     return NextResponse.json({
       success: true,
       campaignId: campaign.id,
       slug,
       title: generated.title,
       forumUrl: forumTopicUrl(slug),
+      forumQuestionsCreated: questionsCreated,
     });
   } catch (err) {
     console.error("Campaign creation error:", err);
