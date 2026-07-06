@@ -74,7 +74,7 @@ export default function NewTopicForm({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-white"
+            className="lf-select"
             required
           >
             {categories.map((c) => (
@@ -90,7 +90,7 @@ export default function NewTopicForm({
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-white"
+            className="lf-select"
             required
           >
             {TURKISH_CITIES.map((c) => (
