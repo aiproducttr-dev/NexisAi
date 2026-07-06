@@ -1,12 +1,13 @@
 import HomeLanding from "@/components/dashboard/HomeLanding";
+import { APP_URL } from "@/lib/constants/urls";
 
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Nexisai",
-  alternateName: ["nexısai", "NexisAI", "nexisai"],
-  url: "https://nexisai.com",
-  logo: "https://nexisai.com/logo.png",
+  alternateName: ["nexısai", "NexisAI"],
+  url: APP_URL,
+  logo: `${APP_URL}/logo.png`,
   description:
     "İşletmenizi yapay zeka arama motorlarında tavsiye edilen seçenekler arasına taşıyan tam otomatik GEO reklam ve veri platformu.",
   sameAs: ["https://nexisaiform.com"],

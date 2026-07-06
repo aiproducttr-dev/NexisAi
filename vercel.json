@@ -2,32 +2,32 @@
   "redirects": [
     {
       "source": "/forum/:path*",
-      "has": [{ "type": "host", "value": "nexisai.com" }],
+      "has": [{ "type": "host", "value": "xn--nexsai-r9a.com" }],
       "destination": "https://nexisaiform.com/:path*",
       "permanent": false
     },
     {
       "source": "/forum/:path*",
-      "has": [{ "type": "host", "value": "www.nexisai.com" }],
+      "has": [{ "type": "host", "value": "www.xn--nexsai-r9a.com" }],
       "destination": "https://nexisaiform.com/:path*",
       "permanent": false
     },
     {
       "source": "/dashboard/:path*",
       "has": [{ "type": "host", "value": "nexisaiform.com" }],
-      "destination": "https://nexisai.com/dashboard/:path*",
+      "destination": "https://xn--nexsai-r9a.com/dashboard/:path*",
       "permanent": false
     },
     {
       "source": "/dashboard",
       "has": [{ "type": "host", "value": "nexisaiform.com" }],
-      "destination": "https://nexisai.com/dashboard",
+      "destination": "https://xn--nexsai-r9a.com/dashboard",
       "permanent": false
     },
     {
       "source": "/content/:path*",
       "has": [{ "type": "host", "value": "nexisaiform.com" }],
-      "destination": "https://nexisai.com/content/:path*",
+      "destination": "https://xn--nexsai-r9a.com/content/:path*",
       "permanent": false
     }
   ]

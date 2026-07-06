@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { APP_URL } from "@/lib/constants/urls";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nexisai.com"),
+  metadataBase: new URL(APP_URL),
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -36,12 +37,12 @@ export const metadata: Metadata = {
     "dijital pazarlama",
   ],
   alternates: {
-    canonical: "https://nexisai.com",
+    canonical: APP_URL,
   },
   openGraph: {
     type: "website",
     locale: "tr_TR",
-    url: "https://nexisai.com",
+    url: APP_URL,
     siteName: "Nexisai",
     title: "NexisAI — Yapay Zeka Reklam Platformu",
     description:
