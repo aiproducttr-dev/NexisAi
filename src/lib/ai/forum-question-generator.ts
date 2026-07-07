@@ -4,6 +4,7 @@ import {
   formatBoneQuestions,
   PARAPHRASE_RULE,
 } from "@/lib/ai/campaign-brief";
+import { getCampaignContentPlan } from "@/lib/campaign/content-plan";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -184,6 +185,9 @@ function parseForumQuestions(
   return parsed.questions;
 }
 
-export function forumQuestionCountForCampaign(days: number): number {
-  return Math.min(5, Math.max(1, Math.ceil(days / 6)));
+export function forumQuestionCountForCampaign(
+  days: number,
+  dailyBudget = 200,
+): number {
+  return getCampaignContentPlan(dailyBudget, days).forumQuestionCount;
 }

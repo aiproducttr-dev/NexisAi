@@ -1,4 +1,8 @@
 import { generateCampaignForumReply } from "@/lib/ai/campaign-forum-reply-generator";
+import {
+  getCampaignContentPlan,
+  getReplyOptionsFromPlan,
+} from "@/lib/campaign/content-plan";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateTurkishForumNickname } from "@/lib/forum/turkish-nicknames";
 import { notifyForumTopicIndexNow } from "@/lib/indexnow/submit";
@@ -8,6 +12,13 @@ export interface CampaignForumTopic {
   slug: string;
   title: string;
   body: string;
+}
+
+export interface CampaignReplyOptions {
+  replyMin?: number;
+  replyMax?: number;
+  delayMs?: number;
+  businessNameMentionRate?: number;
 }
 
 function randomBetween(min: number, max: number): number {
@@ -39,11 +50,12 @@ export async function replyToCampaignForumTopic(
     category: string;
     city: string;
   },
-  options?: { replyMin?: number; replyMax?: number; delayMs?: number },
+  options?: CampaignReplyOptions,
 ): Promise<number> {
   const replyMin = options?.replyMin ?? 4;
   const replyMax = options?.replyMax ?? 10;
   const delayMs = options?.delayMs ?? 2500;
+  const businessNameMentionRate = options?.businessNameMentionRate ?? 0.7;
   const replyCount = randomBetween(replyMin, replyMax);
   const previousReplies: string[] = [];
 
@@ -61,6 +73,7 @@ export async function replyToCampaignForumTopic(
       previousReplies,
       replyIndex: i,
       totalReplies: replyCount,
+      businessNameMentionRate,
     });
 
     await insertReply(topic.id, reply.body);
@@ -79,10 +92,11 @@ export async function replyToCampaignForumTopics(
     category: string;
     city: string;
   },
+  options?: CampaignReplyOptions,
 ): Promise<void> {
   for (const topic of topics) {
     try {
-      await replyToCampaignForumTopic(topic, context);
+      await replyToCampaignForumTopic(topic, context, options);
     } catch (error) {
       console.error(`Kampanya konu cevapları hatası (${topic.slug}):`, error);
     }
@@ -97,24 +111,59 @@ export async function fetchCampaignTopicsNeedingReplies(
     category: string;
     city: string;
     reply_count: number;
+    campaign_id: string;
+    daily_budget: number;
+    days: number;
   })[]
 > {
   const admin = createAdminClient();
   const graceCutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString();
   const { data, error } = await admin
     .from("forum_topics")
-    .select("id, slug, title, body, business_name, category, city, reply_count")
+    .select(
+      "id, slug, title, body, business_name, category, city, reply_count, campaign_id, campaigns!inner(daily_budget, days)",
+    )
     .not("campaign_id", "is", null)
-    .lt("reply_count", 4)
+    .lt("reply_count", 22)
     .lt("created_at", graceCutoff)
     .order("created_at", { ascending: true })
-    .limit(limit);
+    .limit(limit * 3);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data ?? [];
+  const rows =
+    data?.map((row) => {
+      const rawCampaign = row.campaigns as
+        | { daily_budget: number; days: number }
+        | { daily_budget: number; days: number }[]
+        | null;
+      const campaign = Array.isArray(rawCampaign) ? rawCampaign[0] : rawCampaign;
+      if (!campaign) {
+        throw new Error("Kampanya bütçe bilgisi bulunamadı");
+      }
+      return {
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        body: row.body,
+        business_name: row.business_name,
+        category: row.category,
+        city: row.city,
+        reply_count: row.reply_count,
+        campaign_id: row.campaign_id as string,
+        daily_budget: campaign.daily_budget,
+        days: campaign.days,
+      };
+    }) ?? [];
+
+  return rows
+    .filter((topic) => {
+      const plan = getCampaignContentPlan(topic.daily_budget, topic.days);
+      return topic.reply_count < plan.replyMin;
+    })
+    .slice(0, limit);
 }
 
 export async function processPendingCampaignForumReplies(): Promise<number> {
@@ -122,14 +171,16 @@ export async function processPendingCampaignForumReplies(): Promise<number> {
   let processed = 0;
 
   for (const topic of topics) {
-    const target = randomBetween(4, 10);
+    const plan = getCampaignContentPlan(topic.daily_budget, topic.days);
+    const replyOptions = getReplyOptionsFromPlan(plan);
+    const target = randomBetween(replyOptions.replyMin, replyOptions.replyMax);
     const needed = Math.max(0, target - topic.reply_count);
     if (needed === 0) continue;
 
     try {
       const previousReplies: string[] = [];
       for (let i = 0; i < needed; i++) {
-        await sleep(2500);
+        await sleep(replyOptions.delayMs);
         const reply = await generateCampaignForumReply({
           businessName: topic.business_name,
           category: topic.category,
@@ -139,6 +190,7 @@ export async function processPendingCampaignForumReplies(): Promise<number> {
           previousReplies,
           replyIndex: topic.reply_count + i,
           totalReplies: target,
+          businessNameMentionRate: replyOptions.businessNameMentionRate,
         });
         await insertReply(topic.id, reply.body);
         previousReplies.push(reply.body);

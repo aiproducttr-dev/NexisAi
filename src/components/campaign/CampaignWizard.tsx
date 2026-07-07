@@ -8,6 +8,7 @@ import {
   DAYS_MIN,
   calculateVisibilityMetrics,
   formatCurrency,
+  getCampaignContentPlan,
 } from "@/lib/constants/metrics";
 import MetricsPreview, {
   BudgetSlider,
@@ -53,6 +54,7 @@ export default function CampaignWizard() {
   }, [supabase]);
 
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
+  const contentPlan = getCampaignContentPlan(dailyBudget, days);
 
   const canProceedStep1 =
     businessName.trim().length >= 2 && category && city;
@@ -277,6 +279,37 @@ export default function CampaignWizard() {
               <p className="lf-orbitron text-4xl font-bold text-emerald-400">
                 +%{metrics.visibilityIncrease}
               </p>
+            </div>
+            <hr className="border-white/5" />
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-[#64748b]">İçerik paketi</p>
+                <p className="font-semibold text-white">
+                  {contentPlan.estimatedContentPieces} parça
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-[#64748b]">Sistem agresifliği</p>
+                <p className="font-semibold text-amber-300">
+                  {contentPlan.aggressiveness}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-[#64748b]">Forum</p>
+                <p className="font-semibold text-white">
+                  {contentPlan.forumQuestionCount} soru ·{" "}
+                  {contentPlan.estimatedReplyRange.min}–
+                  {contentPlan.estimatedReplyRange.max} cevap
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-[#64748b]">Kanallar</p>
+                <p className="font-semibold text-white">
+                  Site {contentPlan.siteArticleCount} · Blog{" "}
+                  {contentPlan.blogArticleCount} · dev.to{" "}
+                  {contentPlan.devToArticleCount}
+                </p>
+              </div>
             </div>
           </div>
 

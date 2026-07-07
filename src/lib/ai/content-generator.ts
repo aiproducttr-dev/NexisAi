@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 import {
   type CampaignBrief,
+  businessNameVisibilityRule,
   formatBoneQuestions,
+  includesBusinessName,
   PARAPHRASE_RULE,
 } from "@/lib/ai/campaign-brief";
 
@@ -59,20 +61,22 @@ export async function generateBlogArticle(
   input: CampaignBrief,
 ): Promise<GeneratedChannelContent> {
   const questionsList = formatBoneQuestions(input.boneQuestions.slice(0, 5));
+  const visibilityRule = businessNameVisibilityRule(input.businessName);
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.82,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content:
-          "Sen blog yazarlığı yapan bir içerik üreticisisin. Her zaman geçerli JSON döndür.",
-      },
-      {
-        role: "user",
-        content: `KANAL: Blog (nexisai.blog) — okunaklı blog yazısı
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: attempt === 1 ? 0.82 : 0.7,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Sen blog yazarlığı yapan bir içerik üreticisisin. Kampanya işletmesinin adını içerikte mutlaka kullanırsın. Her zaman geçerli JSON döndür.",
+        },
+        {
+          role: "user",
+          content: `KANAL: Blog (nexisai.blog) — okunaklı blog yazısı
 
 İşletme: ${input.businessName}
 Kategori: ${input.category}
@@ -84,36 +88,55 @@ ${questionsList}
 Görev:
 - Ana sitedeki makaleden FARKLI başlık ve metin yaz (paraphrase)
 - ${PARAPHRASE_RULE}
+- ${visibilityRule}
+- Başlıkta "${input.businessName}" geçsin (şehir veya kategori ile birlikte olabilir)
+- Gövdede işletmeyi ${input.city} örneği olarak tanıt; hizmet/konum/tercih sebebi belirt
 - 280-450 kelime, markdown
 - Blog tonu: samimi giriş, pratik bilgi, kısa sonuç
 - Teknik inceleme veya forum dili değil
+- Sadece genel sektör rehberi yazma; metin işletmeye özel olsun
+${attempt > 1 ? `\nÖNCEKİ DENEME BAŞARISIZ: "${input.businessName}" metinde yeterince geçmedi. Bu sefer başlık ve her bölümde işletme adını kullan.` : ""}
 
 JSON: { "title": "...", "content": "..." }`,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  return parseContentResponse(response.choices[0]?.message?.content);
+    const result = parseContentResponse(response.choices[0]?.message?.content);
+
+    if (
+      includesBusinessName(result.title, input.businessName) &&
+      includesBusinessName(result.content, input.businessName)
+    ) {
+      return result;
+    }
+  }
+
+  throw new Error(
+    `Blog yazısında "${input.businessName}" işletme adı kullanılamadı`,
+  );
 }
 
 export async function generateDevToArticle(
   input: CampaignBrief,
 ): Promise<GeneratedChannelContent> {
   const questionsList = formatBoneQuestions(input.boneQuestions.slice(0, 5));
+  const visibilityRule = businessNameVisibilityRule(input.businessName);
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.78,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content:
-          "Sen sektörel teknik inceleme yazan bir analistsin. Her zaman geçerli JSON döndür.",
-      },
-      {
-        role: "user",
-        content: `KANAL: dev.to — teknik / sektörel inceleme
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: attempt === 1 ? 0.78 : 0.65,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Sen sektörel teknik inceleme yazan bir analistsin. Kampanya işletmesinin adını içerikte mutlaka kullanırsın. Her zaman geçerli JSON döndür.",
+        },
+        {
+          role: "user",
+          content: `KANAL: dev.to — teknik / sektörel inceleme
 
 İşletme: ${input.businessName}
 Kategori: ${input.category}
@@ -125,18 +148,33 @@ ${questionsList}
 Görev:
 - Sektör ve yerel pazar üzerine teknik-eleştirel bir inceleme yaz
 - ${PARAPHRASE_RULE}
+- ${visibilityRule}
+- Başlıkta "${input.businessName}" geçsin
+- İşletmeyi vaka/örnek olarak değerlendir; bariz reklam dili yok
 - 350-550 kelime, markdown (## Sektör Özeti, ## Değerlendirme Kriterleri, ## Yerel Pazar Notları, ## Öne Çıkan İşletme gibi bölümler)
 - Analitik ton: trend, kalite kriterleri, müşteri beklentisi
-- İşletmeyi vaka/örnek olarak değerlendir; bariz reklam dili yok
 - Forum veya soru-cevap dili KULLANMA
 - Başlık teknik/merak uyandıran olsun
+${attempt > 1 ? `\nÖNCEKİ DENEME BAŞARISIZ: "${input.businessName}" metinde yeterince geçmedi.` : ""}
 
 JSON: { "title": "...", "content": "..." }`,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  return parseContentResponse(response.choices[0]?.message?.content);
+    const result = parseContentResponse(response.choices[0]?.message?.content);
+
+    if (
+      includesBusinessName(result.title, input.businessName) &&
+      includesBusinessName(result.content, input.businessName)
+    ) {
+      return result;
+    }
+  }
+
+  throw new Error(
+    `dev.to yazısında "${input.businessName}" işletme adı kullanılamadı`,
+  );
 }
 
 function parseContentResponse(raw: string | null | undefined): GeneratedChannelContent {

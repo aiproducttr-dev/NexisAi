@@ -34,10 +34,13 @@ export async function generateCampaignForumReply(input: {
   previousReplies?: string[];
   replyIndex?: number;
   totalReplies?: number;
+  businessNameMentionRate?: number;
 }): Promise<GeneratedCampaignForumReply> {
   const index = input.replyIndex ?? 0;
+  const totalReplies = input.totalReplies ?? 6;
+  const mentionRate = input.businessNameMentionRate ?? 0.7;
   const style = pickStyle(index);
-  const mustNameBusiness = index < Math.ceil((input.totalReplies ?? 6) * 0.7);
+  const mustNameBusiness = index < Math.ceil(totalReplies * mentionRate);
 
   const prior =
     input.previousReplies && input.previousReplies.length > 0
@@ -60,7 +63,7 @@ export async function generateCampaignForumReply(input: {
       },
       {
         role: "user",
-        content: `Kampanya forum sorusuna ${index + 1}. cevabı yaz (toplam ${input.totalReplies ?? "?"} cevaptan biri).
+        content: `Kampanya forum sorusuna ${index + 1}. cevabı yaz (toplam ${totalReplies} cevaptan biri).
 
 İşletme: ${input.businessName}
 Kategori: ${input.category}

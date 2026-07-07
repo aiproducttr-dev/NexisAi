@@ -1,5 +1,15 @@
 import type { VisibilityMetrics } from "@/lib/types";
 
+export {
+  BUDGET_TIER_STEP,
+  getCampaignContentPlan,
+  getReplyOptionsFromPlan,
+} from "@/lib/campaign/content-plan";
+export type {
+  AggressivenessLevel,
+  CampaignContentPlan,
+} from "@/lib/campaign/content-plan";
+
 export const BUDGET_MIN = 200;
 export const BUDGET_MAX = 5000;
 export const DAYS_MIN = 1;
