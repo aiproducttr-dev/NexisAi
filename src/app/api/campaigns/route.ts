@@ -12,7 +12,8 @@ import {
 import { forumTopicUrl } from "@/lib/constants/urls";
 import { publishToWordPress } from "@/lib/wordpress/publish-post";
 import { publishToDevTo } from "@/lib/devto/publish-article";
-import { NextResponse } from "next/server";
+import { replyToCampaignForumTopics } from "@/lib/forum/reply-to-campaign-topics";
+import { after, NextResponse } from "next/server";
 import slugify from "slugify";
 
 export async function POST(request: Request) {
@@ -204,7 +205,7 @@ export async function POST(request: Request) {
       count: questionCount,
     });
 
-    const { count: questionsCreated, slugs: forumSlugs } =
+    const { count: questionsCreated, slugs: forumSlugs, topics: forumTopics } =
       await createForumQuestionTopics(
         campaign.id,
         user.id,
@@ -214,6 +215,20 @@ export async function POST(request: Request) {
         baseSlug,
         forumQuestions
       );
+
+    if (forumTopics.length > 0) {
+      after(async () => {
+        try {
+          await replyToCampaignForumTopics(forumTopics, {
+            businessName,
+            category,
+            city,
+          });
+        } catch (replyError) {
+          console.error("Kampanya forum cevapları hatası:", replyError);
+        }
+      });
+    }
 
     const primaryForumSlug = forumSlugs[0];
 

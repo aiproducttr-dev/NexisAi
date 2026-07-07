@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GeneratedForumQuestion } from "@/lib/ai/forum-question-generator";
+import type { CampaignForumTopic } from "@/lib/forum/reply-to-campaign-topics";
 import slugify from "slugify";
 
 export async function createForumQuestionTopics(
@@ -10,11 +11,12 @@ export async function createForumQuestionTopics(
   businessName: string,
   baseSlug: string,
   questions: GeneratedForumQuestion[]
-): Promise<{ count: number; slugs: string[] }> {
-  if (questions.length === 0) return { count: 0, slugs: [] };
+): Promise<{ count: number; slugs: string[]; topics: CampaignForumTopic[] }> {
+  if (questions.length === 0) return { count: 0, slugs: [], topics: [] };
 
   const admin = createAdminClient();
   const slugs: string[] = [];
+  const topics: CampaignForumTopic[] = [];
   let created = 0;
 
   for (let i = 0; i < questions.length; i++) {
@@ -26,7 +28,7 @@ export async function createForumQuestionTopics(
     });
     const uniqueSlug = `${slug}-${Date.now().toString(36).slice(-5)}`;
 
-    const { error } = await admin.from("forum_topics").insert({
+    const { data, error } = await admin.from("forum_topics").insert({
       campaign_id: campaignId,
       slug: uniqueSlug,
       title: q.title,
@@ -39,15 +41,16 @@ export async function createForumQuestionTopics(
       source_question: q.sourceQuestion,
       display_author_name: q.authorName,
       content_slug: null,
-    });
+    }).select("id, slug, title, body").single();
 
-    if (!error) {
+    if (!error && data) {
       created++;
       slugs.push(uniqueSlug);
+      topics.push(data);
     } else {
-      console.error("Forum question topic error:", error.message);
+      console.error("Forum question topic error:", error?.message);
     }
   }
 
-  return { count: created, slugs };
+  return { count: created, slugs, topics };
 }

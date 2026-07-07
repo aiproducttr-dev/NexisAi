@@ -390,10 +390,18 @@ async function runTopicWave() {
   const { generateForumReply } = await import(
     "../src/lib/ai/forum-reply-generator"
   );
+  const { processPendingCampaignForumReplies } = await import(
+    "../src/lib/forum/reply-to-campaign-topics"
+  );
 
   const db = getAdminDb();
   const { data: categories } = await db.from("categories").select("id, name");
   if (!categories?.length) throw new Error("Kategori bulunamadı");
+
+  const campaignReplies = await processPendingCampaignForumReplies();
+  if (campaignReplies > 0) {
+    log(`Kampanya konularına cevap verildi: ${campaignReplies} konu`);
+  }
 
   log(
     `Dalga başlıyor: ${topicsPerWave} konu · ${formatWait(topicStaggerMs)} arayla · aktif cevap döngüsü: ${activeReplyLoops}`
