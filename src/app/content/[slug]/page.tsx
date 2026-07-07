@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import BrandLogo from "@/components/layout/BrandLogo";
+import { markdownToHtml } from "@/lib/content/markdown-to-html";
 import { ArrowLeft } from "lucide-react";
 
 export default async function ContentPage({
@@ -64,14 +65,7 @@ export default async function ContentPage({
         <div
           className="prose prose-invert prose-indigo max-w-none prose-headings:text-white prose-p:text-zinc-300 prose-strong:text-white prose-a:text-indigo-400"
           dangerouslySetInnerHTML={{
-            __html: content.content
-              .replace(/\n\n/g, "</p><p>")
-              .replace(/\n/g, "<br/>")
-              .replace(/^/, "<p>")
-              .replace(/$/, "</p>")
-              .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-              .replace(/## (.*?)(<br\/>|<\/p>)/g, "<h2>$1</h2>")
-              .replace(/# (.*?)(<br\/>|<\/p>)/g, "<h2>$1</h2>"),
+            __html: markdownToHtml(content.content),
           }}
         />
 

@@ -28,6 +28,20 @@ export default async function DashboardPage({
     .order("created_at", { ascending: false });
 
   const campaignIds = campaigns?.map((c) => c.id) ?? [];
+  const { data: publishedContents } =
+    campaignIds.length > 0
+      ? await supabase
+          .from("published_contents")
+          .select("campaign_id, wordpress_url")
+          .in("campaign_id", campaignIds)
+      : { data: [] };
+
+  const wordpressUrlByCampaign = new Map(
+    (publishedContents ?? [])
+      .filter((item) => item.wordpress_url)
+      .map((item) => [item.campaign_id, item.wordpress_url as string]),
+  );
+
   const { data: forumTopics } =
     campaignIds.length > 0
       ? await supabase
@@ -46,11 +60,20 @@ export default async function DashboardPage({
   }
 
   let createdForumTopics: { slug: string; title: string }[] = [];
+  let createdWordpressUrl: string | null = null;
   if (params.created) {
     const campaign = campaigns?.find((c) => c.content_slug === params.created);
     if (campaign) {
       createdForumTopics = forumTopicsByCampaign.get(campaign.id) ?? [];
     }
+
+    const { data: publishedContent } = await supabase
+      .from("published_contents")
+      .select("wordpress_url")
+      .eq("slug", params.created)
+      .maybeSingle();
+
+    createdWordpressUrl = publishedContent?.wordpress_url ?? null;
   }
 
   const { data: profile } = await supabase
@@ -77,6 +100,19 @@ export default async function DashboardPage({
               >
                 İçerik NexisAI&apos;da yayında
               </Link>
+              {createdWordpressUrl && (
+                <>
+                  {" · "}
+                  <a
+                    href={createdWordpressUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-emerald-200 underline"
+                  >
+                    Blog yazısı nexisai.blog&apos;da
+                  </a>
+                </>
+              )}
               {createdForumTopics.length > 0 && (
                 <>
                   {" · "}
@@ -123,6 +159,7 @@ export default async function DashboardPage({
               const campaignForumTopics =
                 forumTopicsByCampaign.get(campaign.id) ?? [];
               const primaryForum = campaignForumTopics[0];
+              const wordpressUrl = wordpressUrlByCampaign.get(campaign.id);
 
               return (
               <div key={campaign.id} className="lf-card-surface p-6">
@@ -154,6 +191,17 @@ export default async function DashboardPage({
                           <ExternalLink className="h-4 w-4" />
                           NexisAI İçerik
                         </Link>
+                        {wordpressUrl && (
+                          <a
+                            href={wordpressUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm font-medium text-emerald-400 hover:underline"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Blog
+                          </a>
+                        )}
                         {primaryForum && (
                           <a
                             href={forumTopicUrl(primaryForum.slug)}

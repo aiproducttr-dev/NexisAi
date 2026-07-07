@@ -10,6 +10,7 @@ import {
   createForumQuestionTopics,
 } from "@/lib/forum/create-topic";
 import { forumTopicUrl } from "@/lib/constants/urls";
+import { publishToWordPress } from "@/lib/wordpress/publish-post";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 
@@ -138,6 +139,34 @@ export async function POST(request: Request) {
       });
     }
 
+    let wordpressUrl: string | null = null;
+
+    try {
+      const wordpressResult = await publishToWordPress({
+        title: generated.title,
+        content: generated.content,
+        slug,
+        category,
+        city,
+        businessName,
+      });
+
+      if (wordpressResult) {
+        wordpressUrl = wordpressResult.url;
+        const admin = createAdminClient();
+        await admin
+          .from("published_contents")
+          .update({
+            wordpress_post_id: wordpressResult.postId,
+            wordpress_url: wordpressResult.url,
+          })
+          .eq("campaign_id", campaign.id)
+          .eq("slug", slug);
+      }
+    } catch (wordpressError) {
+      console.error("WordPress publish error:", wordpressError);
+    }
+
     const questionCount = forumQuestionCountForCampaign(days);
     const forumQuestions = await generateForumQuestions({
       category,
@@ -165,6 +194,7 @@ export async function POST(request: Request) {
       slug,
       title: generated.title,
       contentUrl: `/content/${slug}`,
+      wordpressUrl,
       forumUrl: primaryForumSlug ? forumTopicUrl(primaryForumSlug) : null,
       forumQuestionsCreated: questionsCreated,
     });

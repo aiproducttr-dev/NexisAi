@@ -41,6 +41,8 @@ export interface PublishedContent {
   title: string;
   content: string;
   slug: string;
+  wordpress_post_id: number | null;
+  wordpress_url: string | null;
   created_at: string;
 }
 
