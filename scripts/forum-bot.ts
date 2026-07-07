@@ -309,6 +309,11 @@ async function runReplyLoop(
     }
 
     log(`[${topic.slug}] Tamamlandı (${replyCount} cevap)`);
+
+    const { notifyForumTopicIndexNow } = await import(
+      "../src/lib/indexnow/submit"
+    );
+    notifyForumTopicIndexNow(topic.slug);
   } catch (err) {
     log(
       `[${topic.slug}] Cevap hatası: ${err instanceof Error ? err.message : String(err)}`
@@ -379,6 +384,11 @@ async function spawnTopic(
   log(
     `Konu açıldı: ${baseUrl}/t/${topic.slug} · ${asker.fullName} · ${category.name}/${city}`
   );
+
+  const { notifyForumTopicIndexNow } = await import(
+    "../src/lib/indexnow/submit"
+  );
+  notifyForumTopicIndexNow(topic.slug);
 
   void runReplyLoop(topic, generateForumReply);
 }

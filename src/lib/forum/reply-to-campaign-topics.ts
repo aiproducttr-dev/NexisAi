@@ -1,6 +1,7 @@
 import { generateCampaignForumReply } from "@/lib/ai/campaign-forum-reply-generator";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateTurkishForumNickname } from "@/lib/forum/turkish-nicknames";
+import { notifyForumTopicIndexNow } from "@/lib/indexnow/submit";
 
 export interface CampaignForumTopic {
   id: string;
@@ -65,6 +66,8 @@ export async function replyToCampaignForumTopic(
     await insertReply(topic.id, reply.body);
     previousReplies.push(reply.body);
   }
+
+  notifyForumTopicIndexNow(topic.slug);
 
   return replyCount;
 }

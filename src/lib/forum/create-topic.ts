@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GeneratedForumQuestion } from "@/lib/ai/forum-question-generator";
 import type { CampaignForumTopic } from "@/lib/forum/reply-to-campaign-topics";
+import { notifyForumTopicsIndexNow } from "@/lib/indexnow/submit";
 import slugify from "slugify";
 
 export async function createForumQuestionTopics(
@@ -50,6 +51,10 @@ export async function createForumQuestionTopics(
     } else {
       console.error("Forum question topic error:", error?.message);
     }
+  }
+
+  if (slugs.length > 0) {
+    notifyForumTopicsIndexNow(slugs);
   }
 
   return { count: created, slugs, topics };

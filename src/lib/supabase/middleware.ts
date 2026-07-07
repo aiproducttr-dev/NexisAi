@@ -6,6 +6,7 @@ import {
   isAppHost,
   isForumHost,
 } from "@/lib/constants/urls";
+import { isIndexNowKeyPath } from "@/lib/indexnow/config";
 
 function shouldRewriteToForum(pathname: string): boolean {
   return (
@@ -94,6 +95,10 @@ export async function updateSession(request: NextRequest) {
       url.search = "";
     }
     return NextResponse.redirect(url);
+  }
+
+  if (forumSite && isIndexNowKeyPath(pathname)) {
+    return supabaseResponse;
   }
 
   if (forumSite && shouldRewriteToForum(pathname)) {

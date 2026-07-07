@@ -1,4 +1,5 @@
 import { forumDisplayName } from "@/lib/forum/organic-topic";
+import { notifyForumTopicIndexNow } from "@/lib/indexnow/submit";
 import { createClientFromRequest } from "@/lib/supabase/request-client";
 import { NextResponse } from "next/server";
 
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
 
     const { data: topic } = await supabase
       .from("forum_topics")
-      .select("id")
+      .select("id, slug")
       .eq("id", topicId)
       .single();
 
@@ -61,6 +62,8 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    notifyForumTopicIndexNow(topic.slug);
 
     return NextResponse.json({ success: true, reply });
   } catch {

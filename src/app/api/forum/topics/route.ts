@@ -1,4 +1,5 @@
 import { buildOrganicTopicSlug, forumDisplayName } from "@/lib/forum/organic-topic";
+import { notifyForumTopicIndexNow } from "@/lib/indexnow/submit";
 import { createClientFromRequest } from "@/lib/supabase/request-client";
 import { NextResponse } from "next/server";
 
@@ -70,6 +71,8 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    notifyForumTopicIndexNow(topic.slug);
 
     return NextResponse.json({ success: true, topic });
   } catch {
