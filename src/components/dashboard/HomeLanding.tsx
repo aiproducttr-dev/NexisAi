@@ -52,7 +52,7 @@ export default function HomeLanding() {
 
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="lf-animate-in flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-6">
-          <BrandLogo href="/" size="md" priority />
+          <BrandLogo href="/" size="xl" priority />
           <Link
             href={REGISTER_HREF}
             className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-[#e2e8f0] shadow-[0_0_20px_rgba(139,92,246,0.15)] transition hover:border-violet-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.55)] sm:shrink-0"

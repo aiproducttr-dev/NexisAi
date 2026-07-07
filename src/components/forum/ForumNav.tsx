@@ -17,7 +17,7 @@ export default function ForumNav({
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <BrandLogo
           href="/forum"
-          size="md"
+          size="lg"
           suffix={
             <span className="lf-orbitron hidden text-base font-bold tracking-wide text-cyan-400 sm:inline">
               FORM

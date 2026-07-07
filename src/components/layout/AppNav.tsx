@@ -22,7 +22,7 @@ export default function AppNav({ backLink, right, userLabel }: AppNavProps) {
               <span className="hidden sm:inline">{backLink.label}</span>
             </Link>
           ) : null}
-          <BrandLogo href="/" size="md" />
+          <BrandLogo href="/" size="lg" />
         </div>
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-4">
