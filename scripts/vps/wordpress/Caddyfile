@@ -1,0 +1,4 @@
+nexisai.blog, www.nexisai.blog {
+	encode gzip
+	reverse_proxy wordpress:80
+}
