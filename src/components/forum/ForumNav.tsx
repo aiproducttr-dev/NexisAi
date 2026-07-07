@@ -19,7 +19,7 @@ export default function ForumNav({
           href="/forum"
           size="md"
           suffix={
-            <span className="lf-orbitron hidden text-sm font-bold tracking-wide text-cyan-400 sm:inline">
+            <span className="lf-orbitron hidden text-base font-bold tracking-wide text-cyan-400 sm:inline">
               FORM
             </span>
           }

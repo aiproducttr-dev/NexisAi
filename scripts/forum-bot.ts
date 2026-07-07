@@ -1,16 +1,11 @@
 /**
- * NexisAI Form forum bot — sürekli çalışan organik soru + cevap simülasyonu.
+ * NexisAI Form forum bot — paralel konu dalgaları + bağımsız cevap döngüleri.
  *
  * Tek döngü:  npm run forum-bot
  * Sürekli:    npm run forum-bot:daemon
  *
- * Ortam (.env.local):
- *   FORUM_BOT_BASE_URL=https://nexisaiform.com
- *   FORUM_BOT_INTERVAL_MIN_MS=300000   (varsayılan 5 dk)
- *   FORUM_BOT_INTERVAL_MAX_MS=300000
- *   FORUM_BOT_REPLY_DELAY_MS=10000     (cevaplar arası 10 sn)
- *   FORUM_BOT_PROXIES=http://...,socks5://...  (virgülle ayrılmış TR proxy)
- *   FORUM_BOT_PROXIES_FILE=/path/forum-bot-proxies.txt
+ * Varsayılan: Her 5 dk'da 20 farklı hesaptan 20 konu (≈15 sn arayla).
+ * Her konuya 4-10 cevap, cevaplar arası 10 sn (konu bağımsız devam eder).
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -38,17 +33,41 @@ const baseUrl = (
   "https://nexisaiform.com"
 ).replace(/\/$/, "");
 
-const intervalMinMs = Number(process.env.FORUM_BOT_INTERVAL_MIN_MS || 5 * 60 * 1000);
-const intervalMaxMs = Number(process.env.FORUM_BOT_INTERVAL_MAX_MS || 5 * 60 * 1000);
+const waveIntervalMs = Number(
+  process.env.FORUM_BOT_WAVE_INTERVAL_MS || 5 * 60 * 1000
+);
+const topicsPerWave = Number(process.env.FORUM_BOT_TOPICS_PER_WAVE || 20);
+const topicStaggerMs = Number(
+  process.env.FORUM_BOT_TOPIC_STAGGER_MS ||
+    Math.floor(waveIntervalMs / topicsPerWave)
+);
 const replyDelayMs = Number(process.env.FORUM_BOT_REPLY_DELAY_MS || 10 * 1000);
+const replyMin = Number(process.env.FORUM_BOT_REPLY_MIN || 4);
+const replyMax = Number(process.env.FORUM_BOT_REPLY_MAX || 10);
 const daemonMode = process.argv.includes("--daemon");
 const proxyPool = loadProxyList();
+
+let activeReplyLoops = 0;
 
 interface BotAccount {
   email: string;
   password: string;
   fullName: string;
   proxy?: string;
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
+}
+
+interface TopicContext {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  category: string;
+  city: string;
 }
 
 function withProxy(account: BotAccount): BotAccount {
@@ -84,9 +103,17 @@ function log(message: string) {
   console.log(`[${time}] ${message}`);
 }
 
+function getAdminDb(): SupabaseClient {
+  if (!serviceKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY gerekli");
+  }
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 async function registerOnForum(account: BotAccount): Promise<void> {
   const proxiedFetch = createProxiedFetch(account.proxy);
-  const ip = await resolveOutboundIp(account.proxy);
 
   const res = await proxiedFetch(`${baseUrl}/api/auth/register`, {
     method: "POST",
@@ -98,18 +125,10 @@ async function registerOnForum(account: BotAccount): Promise<void> {
     }),
   });
 
-  if (res.ok) {
-    log(
-      `Kayıt: ${account.fullName} (${account.email}) · IP: ${ip ?? "?"} · ${maskProxy(account.proxy)}`
-    );
-    return;
-  }
+  if (res.ok) return;
 
   const data = (await res.json()) as { error?: string };
-  if (res.status === 409) {
-    log(`Zaten kayıtlı: ${account.fullName}`);
-    return;
-  }
+  if (res.status === 409) return;
 
   throw new Error(`Kayıt hatası (${account.fullName}): ${data.error || res.status}`);
 }
@@ -236,47 +255,10 @@ async function postReply(
   }
 }
 
-async function runCycle() {
-  const { generateForumQuestions } = await import(
-    "../src/lib/ai/forum-question-generator"
-  );
-  const { generateForumReply } = await import(
-    "../src/lib/ai/forum-reply-generator"
-  );
-
-  const asker = withProxy(createRandomForumAccount());
-  const replyCount = randomBetween(4, 10);
-  const repliers = Array.from({ length: replyCount }, () =>
-    withProxy(createRandomForumAccount())
-  );
-
-  log(
-    `Yeni üyeler: ${asker.fullName} → soru, ${replyCount} cevaplayan (${repliers.map((r) => r.fullName).join(", ")})`
-  );
-
-  await registerOnForum(asker);
-  await sleep(randomBetween(800, 2000));
-
-  for (const replier of repliers) {
-    await registerOnForum(replier);
-    await sleep(randomBetween(600, 1800));
-  }
-  await sleep(randomBetween(500, 1200));
-
-  const admin = serviceKey
-    ? createClient(supabaseUrl, serviceKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      })
-    : null;
-
-  const db = admin ?? createClient(supabaseUrl, supabaseAnonKey);
-
-  const { data: categories } = await db.from("categories").select("id, name");
-  if (!categories?.length) throw new Error("Kategori bulunamadı");
-
-  const category = pickRandom(categories);
-  const city = pickRandom(TURKISH_CITIES) as string;
-
+async function pickBoneQuestions(
+  db: SupabaseClient,
+  category: CategoryRow
+): Promise<string[]> {
   const { data: boneRows } = await db
     .from("bone_questions")
     .select("question_text")
@@ -285,11 +267,69 @@ async function runCycle() {
 
   const boneQuestions =
     boneRows?.map((r) => r.question_text).filter(Boolean) ?? [];
-  if (boneQuestions.length === 0) {
-    throw new Error(`"${category.name}" için kemik soru yok`);
-  }
 
-  log(`Kategori: ${category.name} · Şehir: ${city}`);
+  if (boneQuestions.length === 0) {
+    return [`${category.name} hakkında tavsiye arıyorum`];
+  }
+  return boneQuestions;
+}
+
+async function runReplyLoop(
+  topic: TopicContext,
+  generateForumReply: typeof import("../src/lib/ai/forum-reply-generator").generateForumReply
+) {
+  activeReplyLoops++;
+  const replyCount = randomBetween(replyMin, replyMax);
+  const previousReplies: string[] = [];
+
+  try {
+    log(
+      `[${topic.slug}] Cevap döngüsü başladı · ${replyCount} cevap planlandı`
+    );
+
+    for (let i = 0; i < replyCount; i++) {
+      await sleep(replyDelayMs);
+
+      const replier = withProxy(createRandomForumAccount());
+      await registerOnForum(replier);
+
+      const reply = await generateForumReply({
+        category: topic.category,
+        city: topic.city,
+        topicTitle: topic.title,
+        topicBody: topic.body,
+        previousReplies,
+        replyIndex: i,
+        totalReplies: replyCount,
+      });
+
+      await postReply(replier, topic.id, reply.body);
+      previousReplies.push(reply.body);
+      log(`[${topic.slug}] Cevap ${i + 1}/${replyCount}: ${replier.fullName}`);
+    }
+
+    log(`[${topic.slug}] Tamamlandı (${replyCount} cevap)`);
+  } catch (err) {
+    log(
+      `[${topic.slug}] Cevap hatası: ${err instanceof Error ? err.message : String(err)}`
+    );
+  } finally {
+    activeReplyLoops--;
+  }
+}
+
+async function spawnTopic(
+  db: SupabaseClient,
+  categories: CategoryRow[],
+  generateForumQuestions: typeof import("../src/lib/ai/forum-question-generator").generateForumQuestions,
+  generateForumReply: typeof import("../src/lib/ai/forum-reply-generator").generateForumReply
+) {
+  const asker = withProxy(createRandomForumAccount());
+  await registerOnForum(asker);
+
+  const category = pickRandom(categories);
+  const city = pickRandom(TURKISH_CITIES) as string;
+  const boneQuestions = await pickBoneQuestions(db, category);
 
   const questions = await generateForumQuestions({
     category: category.name,
@@ -299,12 +339,9 @@ async function runCycle() {
   });
 
   const q = questions[0]!;
-  log(`Soru: ${q.title} (${asker.fullName})`);
-
   const { supabase: askerClient, session: askerSession } = await signIn(asker);
-  await sleep(randomBetween(1200, 3000));
 
-  let topic: { id: string; slug: string; title: string };
+  let topicRow: { id: string; slug: string; title: string };
 
   try {
     const topicResult = await apiPost(
@@ -318,9 +355,9 @@ async function runCycle() {
       askerSession.access_token,
       asker.proxy
     );
-    topic = topicResult.topic as { id: string; slug: string; title: string };
+    topicRow = topicResult.topic as { id: string; slug: string; title: string };
   } catch {
-    topic = await createTopic(askerClient, askerSession.user.id, {
+    topicRow = await createTopic(askerClient, askerSession.user.id, {
       title: q.title,
       body: q.body,
       category: category.name,
@@ -330,32 +367,51 @@ async function runCycle() {
     });
   }
 
-  log(`Konu açıldı: ${baseUrl}/t/${topic.slug}`);
+  const topic: TopicContext = {
+    id: topicRow.id,
+    slug: topicRow.slug,
+    title: q.title,
+    body: q.body,
+    category: category.name,
+    city,
+  };
 
-  const previousReplies: string[] = [];
+  log(
+    `Konu açıldı: ${baseUrl}/t/${topic.slug} · ${asker.fullName} · ${category.name}/${city}`
+  );
 
-  for (let i = 0; i < repliers.length; i++) {
-    const replier = repliers[i]!;
+  void runReplyLoop(topic, generateForumReply);
+}
 
-    log(`Cevap ${i + 1}/${replyCount} için bekleniyor (${formatWait(replyDelayMs)})...`);
-    await sleep(replyDelayMs);
+async function runTopicWave() {
+  const { generateForumQuestions } = await import(
+    "../src/lib/ai/forum-question-generator"
+  );
+  const { generateForumReply } = await import(
+    "../src/lib/ai/forum-reply-generator"
+  );
 
-    const reply = await generateForumReply({
-      category: category.name,
-      city,
-      topicTitle: q.title,
-      topicBody: q.body,
-      previousReplies,
-      replyIndex: i,
-      totalReplies: replyCount,
-    });
+  const db = getAdminDb();
+  const { data: categories } = await db.from("categories").select("id, name");
+  if (!categories?.length) throw new Error("Kategori bulunamadı");
 
-    await postReply(replier, topic.id, reply.body);
-    previousReplies.push(reply.body);
-    log(`Cevap ${i + 1}/${replyCount}: ${replier.fullName}`);
+  log(
+    `Dalga başlıyor: ${topicsPerWave} konu · ${formatWait(topicStaggerMs)} arayla · aktif cevap döngüsü: ${activeReplyLoops}`
+  );
+
+  for (let i = 0; i < topicsPerWave; i++) {
+    void spawnTopic(db, categories, generateForumQuestions, generateForumReply).catch(
+      (err) => {
+        log(`Konu hatası: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    );
+
+    if (i < topicsPerWave - 1) {
+      await sleep(topicStaggerMs);
+    }
   }
 
-  log(`Tamamlandı (${replyCount} cevap): ${baseUrl}/t/${topic.slug}`);
+  log(`Dalga konu açma tamamlandı (${topicsPerWave} konu kuyruğa alındı)`);
 }
 
 async function main() {
@@ -365,37 +421,34 @@ async function main() {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY gerekli");
   }
+  if (!serviceKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY gerekli");
+  }
 
   log(`Forum bot başladı · ${baseUrl}`);
+  log(
+    `Mod: ${topicsPerWave} konu / ${formatWait(waveIntervalMs)} · konu aralığı ${formatWait(topicStaggerMs)} · cevap aralığı ${formatWait(replyDelayMs)}`
+  );
+
   if (proxyPool.length > 0) {
-    log(`Proxy havuzu: ${proxyPool.length} adet (hesap başına rastgele TR IP)`);
-  } else {
-    log(
-      "Proxy yok — tüm istekler VPS IP'sinden gidiyor. TR proxy için FORUM_BOT_PROXIES ayarlayın."
-    );
+    log(`Proxy havuzu: ${proxyPool.length} adet`);
   }
 
   if (!daemonMode) {
-    await runCycle();
+    await runTopicWave();
+    await sleep(60_000);
     return;
   }
 
-  log(
-    `Daemon modu · döngü aralığı ${Math.round(intervalMinMs / 60000)}-${Math.round(intervalMaxMs / 60000)} dk`
-  );
-
   while (true) {
     try {
-      await runCycle();
+      await runTopicWave();
     } catch (err) {
-      log(
-        `Döngü hatası: ${err instanceof Error ? err.message : String(err)}`
-      );
+      log(`Dalga hatası: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    const waitMs = randomBetween(intervalMinMs, intervalMaxMs);
-    log(`Sonraki konu ${formatWait(waitMs)} sonra...`);
-    await sleep(waitMs);
+    log(`Sonraki dalga ${formatWait(waveIntervalMs)} sonra...`);
+    await sleep(waveIntervalMs);
   }
 }
 

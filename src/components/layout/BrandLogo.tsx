@@ -4,9 +4,9 @@ import Link from "next/link";
 export const LOGO_SRC = "/logo.png";
 
 const sizeClasses = {
-  sm: "h-8 w-auto",
-  md: "h-9 w-auto sm:h-10",
-  lg: "h-12 w-auto",
+  sm: "h-10 w-auto",
+  md: "h-12 w-auto sm:h-14",
+  lg: "h-16 w-auto sm:h-[4.5rem]",
 } as const;
 
 interface BrandLogoProps {
@@ -29,8 +29,8 @@ export default function BrandLogo({
       <Image
         src={LOGO_SRC}
         alt="NexisAI"
-        width={160}
-        height={64}
+        width={240}
+        height={96}
         priority={priority}
         className={`${sizeClasses[size]} shrink-0 drop-shadow-[0_0_12px_rgba(139,92,246,0.45)]`}
       />
