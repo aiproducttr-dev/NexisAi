@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed:bone-questions": "npx tsx scripts/seed-bone-questions.ts",
     "forum-bot": "npx tsx scripts/forum-bot.ts",
-    "forum-bot:daemon": "npx tsx scripts/forum-bot.ts --daemon"
+    "forum-bot:daemon": "npx tsx scripts/forum-bot.ts --daemon",
+    "generate:favicons": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
