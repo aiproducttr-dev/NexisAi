@@ -32,7 +32,7 @@ export default async function DashboardPage({
     campaignIds.length > 0
       ? await supabase
           .from("published_contents")
-          .select("campaign_id, wordpress_url")
+          .select("campaign_id, wordpress_url, devto_url")
           .in("campaign_id", campaignIds)
       : { data: [] };
 
@@ -40,6 +40,12 @@ export default async function DashboardPage({
     (publishedContents ?? [])
       .filter((item) => item.wordpress_url)
       .map((item) => [item.campaign_id, item.wordpress_url as string]),
+  );
+
+  const devtoUrlByCampaign = new Map(
+    (publishedContents ?? [])
+      .filter((item) => item.devto_url)
+      .map((item) => [item.campaign_id, item.devto_url as string]),
   );
 
   const { data: forumTopics } =
@@ -61,6 +67,7 @@ export default async function DashboardPage({
 
   let createdForumTopics: { slug: string; title: string }[] = [];
   let createdWordpressUrl: string | null = null;
+  let createdDevtoUrl: string | null = null;
   if (params.created) {
     const campaign = campaigns?.find((c) => c.content_slug === params.created);
     if (campaign) {
@@ -69,11 +76,12 @@ export default async function DashboardPage({
 
     const { data: publishedContent } = await supabase
       .from("published_contents")
-      .select("wordpress_url")
+      .select("wordpress_url, devto_url")
       .eq("slug", params.created)
       .maybeSingle();
 
     createdWordpressUrl = publishedContent?.wordpress_url ?? null;
+    createdDevtoUrl = publishedContent?.devto_url ?? null;
   }
 
   const { data: profile } = await supabase
@@ -110,6 +118,19 @@ export default async function DashboardPage({
                     className="font-semibold text-emerald-200 underline"
                   >
                     Blog yazısı nexisai.blog&apos;da
+                  </a>
+                </>
+              )}
+              {createdDevtoUrl && (
+                <>
+                  {" · "}
+                  <a
+                    href={createdDevtoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-emerald-200 underline"
+                  >
+                    dev.to&apos;da yayında
                   </a>
                 </>
               )}
@@ -160,6 +181,7 @@ export default async function DashboardPage({
                 forumTopicsByCampaign.get(campaign.id) ?? [];
               const primaryForum = campaignForumTopics[0];
               const wordpressUrl = wordpressUrlByCampaign.get(campaign.id);
+              const devtoUrl = devtoUrlByCampaign.get(campaign.id);
 
               return (
               <div key={campaign.id} className="lf-card-surface p-6">
@@ -200,6 +222,17 @@ export default async function DashboardPage({
                           >
                             <ExternalLink className="h-4 w-4" />
                             Blog
+                          </a>
+                        )}
+                        {devtoUrl && (
+                          <a
+                            href={devtoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm font-medium text-amber-400 hover:underline"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            dev.to
                           </a>
                         )}
                         {primaryForum && (

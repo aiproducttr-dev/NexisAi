@@ -43,6 +43,8 @@ export interface PublishedContent {
   slug: string;
   wordpress_post_id: number | null;
   wordpress_url: string | null;
+  devto_article_id: number | null;
+  devto_url: string | null;
   created_at: string;
 }
 

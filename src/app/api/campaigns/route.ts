@@ -11,6 +11,7 @@ import {
 } from "@/lib/forum/create-topic";
 import { forumTopicUrl } from "@/lib/constants/urls";
 import { publishToWordPress } from "@/lib/wordpress/publish-post";
+import { publishToDevTo } from "@/lib/devto/publish-article";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 
@@ -167,6 +168,34 @@ export async function POST(request: Request) {
       console.error("WordPress publish error:", wordpressError);
     }
 
+    let devtoUrl: string | null = null;
+
+    try {
+      const devtoResult = await publishToDevTo({
+        title: generated.title,
+        content: generated.content,
+        slug,
+        category,
+        city,
+        businessName,
+      });
+
+      if (devtoResult) {
+        devtoUrl = devtoResult.url;
+        const admin = createAdminClient();
+        await admin
+          .from("published_contents")
+          .update({
+            devto_article_id: devtoResult.articleId,
+            devto_url: devtoResult.url,
+          })
+          .eq("campaign_id", campaign.id)
+          .eq("slug", slug);
+      }
+    } catch (devtoError) {
+      console.error("dev.to publish error:", devtoError);
+    }
+
     const questionCount = forumQuestionCountForCampaign(days);
     const forumQuestions = await generateForumQuestions({
       category,
@@ -195,6 +224,7 @@ export async function POST(request: Request) {
       title: generated.title,
       contentUrl: `/content/${slug}`,
       wordpressUrl,
+      devtoUrl,
       forumUrl: primaryForumSlug ? forumTopicUrl(primaryForumSlug) : null,
       forumQuestionsCreated: questionsCreated,
     });
