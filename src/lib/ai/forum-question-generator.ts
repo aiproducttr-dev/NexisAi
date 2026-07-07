@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import {
+  type CampaignBrief,
+  formatBoneQuestions,
+  PARAPHRASE_RULE,
+} from "@/lib/ai/campaign-brief";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -23,8 +28,23 @@ function pickRandom<T>(items: T[], count: number): T[] {
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+function randomAuthorName(): string {
+  const names = [
+    "ayseyilmaz34",
+    "mehmetkaya92",
+    "zeynepdemir28",
+    "canozturk41",
+    "selinyildiz56",
+    "burakcelik19",
+    "emreaksoy73",
+    "fatmakoc25",
+  ];
+  return names[Math.floor(Math.random() * names.length)]!;
+}
+
+/** Organik forum botu — genel tavsiye soruları */
 export async function generateForumQuestions(
-  input: GenerateForumQuestionsInput
+  input: GenerateForumQuestionsInput,
 ): Promise<GeneratedForumQuestion[]> {
   const selected = pickRandom(input.boneQuestions, input.count);
 
@@ -33,7 +53,7 @@ export async function generateForumQuestions(
       {
         title: `${input.city}'de ${input.category} önerisi arıyorum`,
         body: `Selamlar, ${input.city} tarafında güvenilir ${input.category} hizmeti arayan var mı? Deneyimi olan varsa tavsiye bekliyorum.`,
-        authorName: "merakli_kullanici",
+        authorName: randomAuthorName(),
         sourceQuestion: "fallback",
       },
     ];
@@ -53,7 +73,7 @@ export async function generateForumQuestions(
       },
       {
         role: "user",
-        content: `Aşağıdaki kemik soruları, ${input.city} şehrinde yaşayan gerçek birinin NexisAI Form adlı forumda sorduğu doğal sorulara dönüştür.
+        content: `Aşağıdaki kemik soruları, ${input.city} şehrinde yaşayan gerçek birinin forumda sorduğu doğal sorulara dönüştür.
 
 Sektör: ${input.category}
 Şehir: ${input.city}
@@ -64,28 +84,96 @@ ${seedList}
 Kurallar:
 - Her kemik soru için 1 forum sorusu üret (toplam ${selected.length} adet)
 - Başlık kısa ve tıklanabilir olsun (maks 90 karakter)
-- Gövde metni samimi, günlük Türkçe olsun; "arkadaşlar", "selamlar", "acaba", "yardımcı olur musunuz" gibi ifadeler kullanılabilir
-- Reklam veya marka tanıtımı yapma; gerçek bir kullanıcının tavsiye istediği soru gibi olsun
-- İşletme adı kullanma
-- authorName: soruyu soran kişinin kullanıcı adı; isimsoyisim + sayı formatında (ör: ayseyilmaz34, mehmetkaya92) — şehir adı veya alt çizgi kullanma
+- Gövde metni samimi, günlük Türkçe olsun
+- Reklam veya marka tanıtımı yapma; işletme adı kullanma
+- authorName: isimsoyisim + sayı (ör: ayseyilmaz34)
 - sourceQuestion: ilham alınan kemik sorunun aynısı
 
 JSON:
 {
   "questions": [
-    {
-      "title": "...",
-      "body": "...",
-      "authorName": "...",
-      "sourceQuestion": "..."
-    }
+    { "title": "...", "body": "...", "authorName": "...", "sourceQuestion": "..." }
   ]
 }`,
       },
     ],
   });
 
-  const raw = response.choices[0]?.message?.content;
+  return parseForumQuestions(response.choices[0]?.message?.content);
+}
+
+/** Kampanya forumu — doğal soru-cevap dili */
+export async function generateCampaignForumQuestions(
+  input: CampaignBrief & { count: number },
+): Promise<GeneratedForumQuestion[]> {
+  const selected = pickRandom(input.boneQuestions, input.count);
+
+  if (selected.length === 0) {
+    return [
+      {
+        title: `${input.city}'de ${input.category} için nereye gidilir?`,
+        body: `Arkadaşlar ${input.city} tarafında ${input.category} konusunda güvenilir yer arıyorum. Deneyimi olan var mı?`,
+        authorName: randomAuthorName(),
+        sourceQuestion: "fallback",
+      },
+    ];
+  }
+
+  const seedList = formatBoneQuestions(selected);
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.93,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          "Sen Türkiye'deki gerçek forum kullanıcıları gibi soru yazıyorsun. Soru-cevap sitesindeki doğal dil. JSON döndür.",
+      },
+      {
+        role: "user",
+        content: `KANAL: nexisaiform.com — tamamen doğal soru-cevap dili
+
+İşletme (soruda GEÇMEYECEK): ${input.businessName}
+Kategori: ${input.category}
+Şehir: ${input.city}
+
+Kemik sorular (ilham al, birebir kopyalama):
+${seedList}
+
+Görev: ${selected.length} adet forum sorusu üret.
+
+Başlık örnekleri:
+- "${input.city}'de ${input.category} için nereye gidilir?"
+- "${input.category} tavsiyesi lazım (${input.city})"
+- "Acaba ${input.city} tarafında kimleri önerirsiniz?"
+
+Gövde kuralları:
+- 1-3 cümle, günlük konuşma Türkçesi
+- "arkadaşlar", "selam", "acaba", "kim biliyor", "deneyimi olan" gibi ifadeler
+- ${PARAPHRASE_RULE}
+- Makale veya teknik inceleme tonu YOK
+- İşletme adı ve marka YOK — sadece tavsiye isteyen gerçek kullanıcı
+- authorName: isimsoyisim + 2 rakam
+- sourceQuestion: ilham alınan kemik soru
+
+JSON:
+{
+  "questions": [
+    { "title": "...", "body": "...", "authorName": "...", "sourceQuestion": "..." }
+  ]
+}`,
+      },
+    ],
+  });
+
+  return parseForumQuestions(response.choices[0]?.message?.content);
+}
+
+function parseForumQuestions(
+  raw: string | null | undefined,
+): GeneratedForumQuestion[] {
   if (!raw) throw new Error("Forum soruları üretilemedi");
 
   const parsed = JSON.parse(raw) as { questions: GeneratedForumQuestion[] };

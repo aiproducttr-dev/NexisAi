@@ -26,16 +26,7 @@ function buildPostHtml(input: WordPressPublishInput): string {
   const body = markdownToHtml(input.content);
   const sourceUrl = `${getAppBaseUrl()}/content/${input.slug}`;
 
-  const metaParts = [input.category, input.city, input.businessName].filter(
-    Boolean,
-  );
-
-  const metaLine =
-    metaParts.length > 0
-      ? `<p><strong>${metaParts.join(" · ")}</strong></p>`
-      : "";
-
-  return `${metaLine}${body}<hr/><p><em>Bu içerik <a href="${sourceUrl}" rel="noopener noreferrer">NexisAI</a> platformunda da yayınlanmaktadır.</em></p>`;
+  return `${body}<hr/><p><em>Bu içerik <a href="${sourceUrl}" rel="noopener noreferrer">NexisAI</a> platformunda da yayınlanmaktadır.</em></p>`;
 }
 
 export async function publishToWordPress(

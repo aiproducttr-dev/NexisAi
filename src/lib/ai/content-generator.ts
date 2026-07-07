@@ -1,74 +1,161 @@
 import OpenAI from "openai";
+import {
+  type CampaignBrief,
+  formatBoneQuestions,
+  PARAPHRASE_RULE,
+} from "@/lib/ai/campaign-brief";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface GenerateContentInput {
-  businessName: string;
-  category: string;
-  city: string;
-  boneQuestions: string[];
-}
-
-interface GeneratedContent {
+export interface GeneratedChannelContent {
   title: string;
   content: string;
 }
 
-export async function generateCampaignContent(
-  input: GenerateContentInput
-): Promise<GeneratedContent> {
-  const questionsList = input.boneQuestions
-    .map((q, i) => `${i + 1}. ${q}`)
-    .join("\n");
-
-  const prompt = `Sen NexisAI platformu için yapay zeka görünürlük içeriği üreten bir uzmansın.
-
-İşletme Bilgileri:
-- İşletme Adı: ${input.businessName}
-- Kategori: ${input.category}
-- Şehir: ${input.city}
-
-Bu kategoriye ait kemik soru havuzu:
-${questionsList}
-
-Görevin:
-1. Yukarıdaki soruları kategoriyle eşleştirerek SEO ve LLM görünürlüğü için optimize edilmiş bir içerik başlığı oluştur.
-2. Başlığın altına, işletme adını (${input.businessName}), şehri (${input.city}) ve kategoriyi (${input.category}) doğal şekilde içeren, bilgilendirici ve profesyonel bir açıklama metni yaz.
-3. İçerik Türkçe olmalı, 400-600 kelime arasında olmalı.
-4. NexisAI platformu altında yayınlanacak şekilde yazılmalı.
-
-Yanıtını şu JSON formatında ver:
-{
-  "title": "içerik başlığı",
-  "content": "açıklamalı içerik metni (markdown formatında)"
-}`;
+export async function generateSiteArticle(
+  input: CampaignBrief,
+): Promise<GeneratedChannelContent> {
+  const questionsList = formatBoneQuestions(input.boneQuestions);
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
+    temperature: 0.7,
+    response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
         content:
-          "Sen profesyonel bir içerik üreticisisin. Her zaman geçerli JSON formatında yanıt ver.",
+          "Sen NexisAI için kanal bazlı içerik üreten uzmansın. Her zaman geçerli JSON döndür.",
       },
-      { role: "user", content: prompt },
+      {
+        role: "user",
+        content: `KANAL: Ana site (nexısai.com) — detaylı makale
+
+İşletme: ${input.businessName}
+Kategori: ${input.category}
+Şehir: ${input.city}
+
+Kemik sorular (SEO/LLM uyumu için içeriğe yedir):
+${questionsList}
+
+Görev:
+- Detaylı, bilgilendirici bir makale yaz (400-600 kelime)
+- Markdown: ## alt başlıklar, giriş-gelişme-sonuç
+- İşletme adı, şehir ve kategori doğal geçsin
+- Profesyonel ama okunabilir ton
+- Forum veya soru-cevap dili KULLANMA
+
+JSON: { "title": "...", "content": "..." }`,
+      },
     ],
-    temperature: 0.7,
-    response_format: { type: "json_object" },
   });
 
-  const raw = response.choices[0]?.message?.content;
-  if (!raw) {
-    throw new Error("AI içerik üretilemedi");
+  return parseContentResponse(response.choices[0]?.message?.content);
+}
+
+export async function generateBlogArticle(
+  input: CampaignBrief,
+): Promise<GeneratedChannelContent> {
+  const questionsList = formatBoneQuestions(input.boneQuestions.slice(0, 5));
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.82,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          "Sen blog yazarlığı yapan bir içerik üreticisisin. Her zaman geçerli JSON döndür.",
+      },
+      {
+        role: "user",
+        content: `KANAL: Blog (nexisai.blog) — okunaklı blog yazısı
+
+İşletme: ${input.businessName}
+Kategori: ${input.category}
+Şehir: ${input.city}
+
+Referans konular:
+${questionsList}
+
+Görev:
+- Ana sitedeki makaleden FARKLI başlık ve metin yaz (paraphrase)
+- ${PARAPHRASE_RULE}
+- 280-450 kelime, markdown
+- Blog tonu: samimi giriş, pratik bilgi, kısa sonuç
+- Teknik inceleme veya forum dili değil
+
+JSON: { "title": "...", "content": "..." }`,
+      },
+    ],
+  });
+
+  return parseContentResponse(response.choices[0]?.message?.content);
+}
+
+export async function generateDevToArticle(
+  input: CampaignBrief,
+): Promise<GeneratedChannelContent> {
+  const questionsList = formatBoneQuestions(input.boneQuestions.slice(0, 5));
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.78,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          "Sen sektörel teknik inceleme yazan bir analistsin. Her zaman geçerli JSON döndür.",
+      },
+      {
+        role: "user",
+        content: `KANAL: dev.to — teknik / sektörel inceleme
+
+İşletme: ${input.businessName}
+Kategori: ${input.category}
+Şehir: ${input.city}
+
+Referans konular:
+${questionsList}
+
+Görev:
+- Sektör ve yerel pazar üzerine teknik-eleştirel bir inceleme yaz
+- ${PARAPHRASE_RULE}
+- 350-550 kelime, markdown (## Sektör Özeti, ## Değerlendirme Kriterleri, ## Yerel Pazar Notları, ## Öne Çıkan İşletme gibi bölümler)
+- Analitik ton: trend, kalite kriterleri, müşteri beklentisi
+- İşletmeyi vaka/örnek olarak değerlendir; bariz reklam dili yok
+- Forum veya soru-cevap dili KULLANMA
+- Başlık teknik/merak uyandıran olsun
+
+JSON: { "title": "...", "content": "..." }`,
+      },
+    ],
+  });
+
+  return parseContentResponse(response.choices[0]?.message?.content);
+}
+
+function parseContentResponse(raw: string | null | undefined): GeneratedChannelContent {
+  if (!raw) throw new Error("Kanal içeriği üretilemedi");
+
+  const parsed = JSON.parse(raw) as GeneratedChannelContent;
+  if (!parsed.title?.trim() || !parsed.content?.trim()) {
+    throw new Error("Kanal içeriği eksik");
   }
 
-  const parsed = JSON.parse(raw) as GeneratedContent;
+  return {
+    title: parsed.title.trim(),
+    content: parsed.content.trim(),
+  };
+}
 
-  if (!parsed.title || !parsed.content) {
-    throw new Error("AI yanıtı eksik");
-  }
-
-  return parsed;
+// Geriye dönük uyumluluk
+export async function generateCampaignContent(
+  input: CampaignBrief,
+): Promise<GeneratedChannelContent> {
+  return generateSiteArticle(input);
 }

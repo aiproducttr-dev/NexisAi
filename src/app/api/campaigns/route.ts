@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateCampaignContent } from "@/lib/ai/content-generator";
+import {
+  generateSiteArticle,
+  generateBlogArticle,
+  generateDevToArticle,
+} from "@/lib/ai/content-generator";
 import {
   forumQuestionCountForCampaign,
-  generateForumQuestions,
+  generateCampaignForumQuestions,
 } from "@/lib/ai/forum-question-generator";
 import { calculateVisibilityMetrics } from "@/lib/constants/metrics";
 import {
@@ -82,12 +86,16 @@ export async function POST(request: Request) {
       ];
     }
 
-    const generated = await generateCampaignContent({
-      businessName,
-      category,
-      city,
-      boneQuestions,
-    });
+    const brief = { businessName, category, city, boneQuestions };
+    const questionCount = forumQuestionCountForCampaign(days);
+
+    const [siteContent, blogContent, devtoContent, forumQuestions] =
+      await Promise.all([
+        generateSiteArticle(brief),
+        generateBlogArticle(brief),
+        generateDevToArticle(brief),
+        generateCampaignForumQuestions({ ...brief, count: questionCount }),
+      ]);
 
     const baseSlug = slugify(`${businessName}-${city}-${category}`, {
       lower: true,
@@ -126,8 +134,8 @@ export async function POST(request: Request) {
       .from("published_contents")
       .insert({
         campaign_id: campaign.id,
-        title: generated.title,
-        content: generated.content,
+        title: siteContent.title,
+        content: siteContent.content,
         slug,
       });
 
@@ -135,8 +143,8 @@ export async function POST(request: Request) {
       const admin = createAdminClient();
       await admin.from("published_contents").insert({
         campaign_id: campaign.id,
-        title: generated.title,
-        content: generated.content,
+        title: siteContent.title,
+        content: siteContent.content,
         slug,
       });
     }
@@ -145,8 +153,8 @@ export async function POST(request: Request) {
 
     try {
       const wordpressResult = await publishToWordPress({
-        title: generated.title,
-        content: generated.content,
+        title: blogContent.title,
+        content: blogContent.content,
         slug,
         category,
         city,
@@ -173,8 +181,8 @@ export async function POST(request: Request) {
 
     try {
       const devtoResult = await publishToDevTo({
-        title: generated.title,
-        content: generated.content,
+        title: devtoContent.title,
+        content: devtoContent.content,
         slug,
         category,
         city,
@@ -196,14 +204,6 @@ export async function POST(request: Request) {
     } catch (devtoError) {
       console.error("dev.to publish error:", devtoError);
     }
-
-    const questionCount = forumQuestionCountForCampaign(days);
-    const forumQuestions = await generateForumQuestions({
-      category,
-      city,
-      boneQuestions,
-      count: questionCount,
-    });
 
     const { count: questionsCreated, slugs: forumSlugs, topics: forumTopics } =
       await createForumQuestionTopics(
@@ -236,7 +236,7 @@ export async function POST(request: Request) {
       success: true,
       campaignId: campaign.id,
       slug,
-      title: generated.title,
+      title: siteContent.title,
       contentUrl: `/content/${slug}`,
       wordpressUrl,
       devtoUrl,

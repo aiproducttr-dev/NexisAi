@@ -45,14 +45,7 @@ function buildTags(category?: string, city?: string): string[] {
 
 function buildBodyMarkdown(input: DevToPublishInput): string {
   const sourceUrl = `${getAppBaseUrl()}/content/${input.slug}`;
-  const metaParts = [input.category, input.city, input.businessName].filter(
-    Boolean,
-  );
-
-  const metaLine =
-    metaParts.length > 0 ? `**${metaParts.join(" · ")}**\n\n` : "";
-
-  return `${metaLine}${input.content}\n\n---\n\n*This article is also published on [NexisAI](${sourceUrl}).*`;
+  return `${input.content}\n\n---\n\n*This article is also published on [NexisAI](${sourceUrl}).*`;
 }
 
 function buildDescription(content: string): string {

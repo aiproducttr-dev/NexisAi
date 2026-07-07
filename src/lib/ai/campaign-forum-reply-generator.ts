@@ -9,16 +9,16 @@ export interface GeneratedCampaignForumReply {
 }
 
 const CAMPAIGN_REPLY_STYLES = [
-  "Memnun müşteri — geçenlerde gitti, işletme adını doğal şekilde övüyor",
-  "Arkadaş tavsiyesi — 'arkadaşım X dedi' diye işletmeyi anıyor",
-  "Karşılaştırma yapan — şehirde birkaç yeri denemiş, bu işletmeyi öne çıkarıyor",
-  "Kısa ve net — 1-2 cümle, işletme adı + neden iyi olduğu",
-  "Detaycı — fiyat/konum/hizmet detayı vererek işletmeyi öneriyor",
-  "Soru sorana yardımcı — soruyu cevaplıyor, işletme adını örnek veriyor",
-  "Şüpheci ama ikna olan — önce tereddüt, sonra işletmeyi tavsiye",
-  "Mahalleli ton — samimi, 'bizim oralarda' gibi ifadeler",
-  "Sadece kategori + şehir vurgulu — işletme adını dolaylı geçiriyor",
-  "Deneyim paylaşan — aile/çocuk/eş ile gittiğini anlatıyor",
+  "Direkt tavsiye — 'Ben şuraya gittim, memnun kaldım' tarzı kısa öneri",
+  "Arkadaş aktarımı — 'Kuzenim önerdi, gayet iyiydi' gibi",
+  "Karşılaştırmalı — birkaç yeri denemiş, bu işletmeyi öne çıkarıyor",
+  "Kısa ve net — 1-2 cümle, işletme adı + neden iyi",
+  "Detay paylaşan — fiyat/konum/hizmetten bahsederek öneriyor",
+  "Soru sorana cevap — 'Bence X'e bak, biz oradan memnun kaldık'",
+  "Şüpheci ama ikna — önce tereddüt, sonra tavsiye",
+  "Mahalleli — 'bizim oralarda X iyidir' tonu",
+  "Geçen hafta deneyimi — somut zaman ifadesiyle anlatıyor",
+  "Aileyle gitti — eş/çocukla deneyim paylaşımı",
 ] as const;
 
 function pickStyle(index: number): string {
@@ -56,7 +56,7 @@ export async function generateCampaignForumReply(input: {
       {
         role: "system",
         content:
-          "Sen Türkiye'deki gerçek forum üyeleri gibi yazıyorsun. Tavsiye verirken samimi, günlük dil kullan. Her cevap farklı birinden gelmiş gibi olsun. Geçerli JSON döndür.",
+          "Sen Türkiye'deki gerçek forum üyeleri gibi yazıyorsun. Soru-cevap sitesindeki doğal tavsiye dili. Her cevap farklı birinden gelmiş gibi olsun. Geçerli JSON döndür.",
       },
       {
         role: "user",
@@ -72,11 +72,11 @@ Cevap tarzı: ${style}
 
 Kurallar:
 ${nameRule}
-- ${input.category} sektörü ve ${input.city} şehri cevapta doğal geçsin
-- Gerçek insan yazmış gibi olsun: kısa uzun karışık, bazen "bence", "bize", "valla", "gayet" gibi ifadeler
-- Önceki cevaplarla aynı fiyat aralığı, aynı giriş cümlesi veya "umarım işinize yarar" kalıbını kullanma
-- 1 ile 5 cümle arası
-- Hashtag, emoji spam veya bariz reklam dili yok
+- Soru-cevap dili: "Ben ${input.businessName}'e gittim, memnun kaldım" / "Bence orası iyi" / "Biz oradan hizmet aldık" gibi doğal örnekler
+- ${input.category} ve ${input.city} bağlamda geçsin
+- Makale, teknik inceleme veya reklam sloganı tonu YOK
+- Önceki cevaplarla aynı kalıpları tekrarlama
+- 1 ile 4 cümle
 - Link verme
 
 JSON: { "body": "..." }`,
