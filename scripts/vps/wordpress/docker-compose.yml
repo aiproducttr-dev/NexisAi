@@ -30,6 +30,7 @@ services:
         }
     volumes:
       - wp_data:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
 
   caddy:
     image: caddy:2-alpine

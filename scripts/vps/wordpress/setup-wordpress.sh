@@ -75,6 +75,9 @@ wp option update blogdescription 'NexisAI kampanya içerikleri'
 wp option update home "https://${DOMAIN}"
 wp option update siteurl "https://${DOMAIN}"
 
+echo "==> SEO: sitemap.xml + robots.txt"
+wp rewrite flush --hard
+
 if ! grep -q '^WORDPRESS_APP_PASSWORD=' .env 2>/dev/null; then
   APP_PASSWORD="$(wp user application-password create "${WP_ADMIN_USER}" "NexisAI API" --porcelain)"
   {
