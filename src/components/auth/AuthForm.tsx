@@ -98,7 +98,7 @@ export default function AuthForm() {
             <div className="lf-panel p-8 sm:p-10">
               <div className="mb-6 text-center">
                 <div className="mb-4 flex justify-center">
-                  <BrandLogo href="" size="xl" />
+                  <BrandLogo href="" size="2xl" centered />
                 </div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
                   {mode === "register" ? "Kayıt" : "Giriş"}

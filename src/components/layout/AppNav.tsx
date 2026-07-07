@@ -11,23 +11,24 @@ interface AppNavProps {
 export default function AppNav({ backLink, right, userLabel }: AppNavProps) {
   return (
     <nav className="lf-animate-in border-b border-white/5">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+      <div className="mx-auto grid max-w-7xl grid-cols-3 items-center gap-3 px-4 py-5 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 justify-self-start">
           {backLink ? (
             <Link
               href={backLink.href}
-              className="flex shrink-0 items-center gap-2 text-sm text-[#94a3b8] transition hover:text-[#e2e8f0]"
+              className="flex items-center gap-2 text-sm text-[#94a3b8] transition hover:text-[#e2e8f0]"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">{backLink.label}</span>
             </Link>
           ) : null}
-          <BrandLogo href="/" size="lg" />
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+        <BrandLogo href="/" size="xl" centered />
+
+        <div className="flex min-w-0 items-center justify-end justify-self-end gap-2 sm:gap-3">
           {userLabel ? (
-            <span className="hidden max-w-[160px] truncate text-sm text-[#94a3b8] sm:inline lg:max-w-[220px]">
+            <span className="hidden max-w-[120px] truncate text-sm text-[#94a3b8] sm:inline lg:max-w-[180px]">
               {userLabel}
             </span>
           ) : null}

@@ -29,15 +29,16 @@ export default async function ContentPage({
   return (
     <div className="min-h-screen bg-[#030014] text-white">
       <nav className="border-b border-white/5">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto grid max-w-4xl grid-cols-3 items-center gap-3 px-4 py-4 sm:px-6">
           <Link
             href="/"
-            className="flex items-center gap-2 text-zinc-400 transition hover:text-white"
+            className="flex items-center gap-2 justify-self-start text-sm text-zinc-400 transition hover:text-white"
           >
-            <ArrowLeft className="h-4 w-4" />
-            NexisAI
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Geri</span>
           </Link>
-          <BrandLogo href="/" size="sm" />
+          <BrandLogo href="/" size="lg" centered />
+          <div aria-hidden />
         </div>
       </nav>
 
