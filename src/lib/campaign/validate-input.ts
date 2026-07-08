@@ -1,4 +1,5 @@
 import { BUDGET_MAX, BUDGET_MIN, DAYS_MAX, DAYS_MIN } from "@/lib/constants/metrics";
+import { isManufacturerCategory } from "@/lib/constants/categories";
 
 export interface CampaignInput {
   businessName: string;
@@ -6,6 +7,7 @@ export interface CampaignInput {
   city: string;
   dailyBudget: number;
   days: number;
+  productDescription?: string | null;
 }
 
 export function validateCampaignInput(body: unknown): CampaignInput {
@@ -13,10 +15,8 @@ export function validateCampaignInput(body: unknown): CampaignInput {
     throw new Error("Geçersiz istek");
   }
 
-  const { businessName, category, city, dailyBudget, days } = body as Record<
-    string,
-    unknown
-  >;
+  const { businessName, category, city, dailyBudget, days, productDescription } =
+    body as Record<string, unknown>;
 
   if (
     !businessName ||
@@ -44,12 +44,28 @@ export function validateCampaignInput(body: unknown): CampaignInput {
     throw new Error("İşletme adı en az 2 karakter olmalıdır");
   }
 
+  const categoryName = String(category);
+  const product =
+    productDescription === undefined || productDescription === null
+      ? null
+      : String(productDescription).trim();
+
+  if (isManufacturerCategory(categoryName)) {
+    if (!product || product.length < 3) {
+      throw new Error("Üretici firma için ne ürettiğinizi en az 3 karakter ile yazın");
+    }
+    if (product.length > 300) {
+      throw new Error("Ürün açıklaması en fazla 300 karakter olabilir");
+    }
+  }
+
   return {
     businessName: name,
-    category: String(category),
+    category: categoryName,
     city: String(city),
     dailyBudget: budget,
     days: dayCount,
+    productDescription: isManufacturerCategory(categoryName) ? product : null,
   };
 }
 

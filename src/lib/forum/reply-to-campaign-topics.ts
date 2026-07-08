@@ -49,6 +49,7 @@ export async function replyToCampaignForumTopic(
     businessName: string;
     category: string;
     city: string;
+    productDescription?: string | null;
   },
   options?: CampaignReplyOptions,
 ): Promise<number> {
@@ -68,6 +69,7 @@ export async function replyToCampaignForumTopic(
       businessName: context.businessName,
       category: context.category,
       city: context.city,
+      productDescription: context.productDescription,
       topicTitle: topic.title,
       topicBody: topic.body,
       previousReplies,
@@ -91,6 +93,7 @@ export async function replyToCampaignForumTopics(
     businessName: string;
     category: string;
     city: string;
+    productDescription?: string | null;
   },
   options?: CampaignReplyOptions,
 ): Promise<void> {

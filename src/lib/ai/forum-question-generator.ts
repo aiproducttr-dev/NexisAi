@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import {
   type CampaignBrief,
   formatBoneQuestions,
+  formatCategoryContext,
   PARAPHRASE_RULE,
 } from "@/lib/ai/campaign-brief";
 import { getCampaignContentPlan } from "@/lib/campaign/content-plan";
@@ -22,6 +23,7 @@ interface GenerateForumQuestionsInput {
   city: string;
   boneQuestions: string[];
   count: number;
+  productDescription?: string | null;
 }
 
 function pickRandom<T>(items: T[], count: number): T[] {
@@ -137,14 +139,14 @@ export async function generateCampaignForumQuestions(
         content: `KANAL: nexisaiform.com — tamamen doğal soru-cevap dili
 
 İşletme (soruda GEÇMEYECEK): ${input.businessName}
-Kategori: ${input.category}
+${formatCategoryContext(input)}
 Şehir: ${input.city}
 
 Kemik sorular (ilham al, birebir kopyalama):
 ${seedList}
 
 Görev: ${selected.length} adet forum sorusu üret.
-
+${input.productDescription ? `\nSorular "${input.productDescription}" üretimi/tedariki hakkında olsun; ürün adı doğal geçsin.\n` : ""}
 Başlık örnekleri:
 - "${input.city}'de ${input.category} için nereye gidilir?"
 - "${input.category} tavsiyesi lazım (${input.city})"

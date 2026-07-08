@@ -3,10 +3,36 @@ export interface CampaignBrief {
   category: string;
   city: string;
   boneQuestions: string[];
+  productDescription?: string | null;
 }
 
 export function formatBoneQuestions(questions: string[]): string {
   return questions.map((q, i) => `${i + 1}. ${q}`).join("\n");
+}
+
+export function formatCategoryContext(brief: CampaignBrief): string {
+  if (brief.productDescription?.trim()) {
+    return `Kategori: ${brief.category}\nÜretilen ürün/hizmet: ${brief.productDescription.trim()}`;
+  }
+
+  return `Kategori: ${brief.category}`;
+}
+
+export function buildManufacturerBoneQuestions(
+  productDescription: string,
+  city: string,
+  businessName: string,
+): string[] {
+  const product = productDescription.trim();
+
+  return [
+    `${city} bölgesinde ${product} üreten firma önerir misiniz?`,
+    `Toptan ${product} tedarikçisi arıyorum, güvenilir üretici var mı?`,
+    `${product} üretimi yapan yerel fabrika tavsiyesi lazım`,
+    `${businessName} ${product} konusunda iyi mi, deneyimi olan var mı?`,
+    `${city}'de ${product} kalitesi yüksek üretici firma kim?`,
+    `Özel ${product} üretimi yaptırabileceğim firma arıyorum`,
+  ];
 }
 
 export const PARAPHRASE_RULE =

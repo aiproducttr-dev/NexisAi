@@ -12,6 +12,7 @@ export interface CampaignCheckoutRow {
   days: number;
   total_cost: number;
   conversation_id: string;
+  product_description: string | null;
   payment_status: "pending" | "paid" | "failed";
   campaign_id: string | null;
   content_slug: string | null;
@@ -49,6 +50,7 @@ export async function fulfillPaidCheckout(checkoutId: string): Promise<{
     city: row.city,
     dailyBudget: Number(row.daily_budget),
     days: row.days,
+    productDescription: row.product_description,
   };
 
   const result = await createCampaignForUser(row.user_id, input);

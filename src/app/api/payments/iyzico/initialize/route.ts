@@ -54,6 +54,7 @@ export async function POST(request: Request) {
         business_name: input.businessName,
         category: input.category,
         city: input.city,
+        product_description: input.productDescription ?? null,
         daily_budget: input.dailyBudget,
         days: input.days,
         total_cost: metrics.totalCost,

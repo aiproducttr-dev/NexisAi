@@ -1,3 +1,4 @@
+import { sortCategoryNames } from "@/lib/constants/categories";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ForumNav from "@/components/forum/ForumNav";
@@ -26,7 +27,7 @@ export default async function NewForumTopicPage() {
     .select("name")
     .order("name");
 
-  const categories = categoryRows?.map((c) => c.name) ?? [];
+  const categories = sortCategoryNames(categoryRows?.map((c) => c.name) ?? []);
   const userLabel = profile?.full_name || user?.email;
 
   return (

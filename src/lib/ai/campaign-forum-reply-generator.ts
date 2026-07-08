@@ -31,6 +31,7 @@ export async function generateCampaignForumReply(input: {
   city: string;
   topicTitle: string;
   topicBody: string;
+  productDescription?: string | null;
   previousReplies?: string[];
   replyIndex?: number;
   totalReplies?: number;
@@ -46,6 +47,10 @@ export async function generateCampaignForumReply(input: {
     input.previousReplies && input.previousReplies.length > 0
       ? `\nÖnceki cevaplar (aynı cümleleri ve kalıpları TEKRARLAMA):\n${input.previousReplies.map((r, i) => `${i + 1}. ${r}`).join("\n\n")}\n`
       : "";
+
+  const productLine = input.productDescription?.trim()
+    ? `\nÜretilen ürün/hizmet: ${input.productDescription.trim()}`
+    : "";
 
   const nameRule = mustNameBusiness
     ? `- Bu cevapta "${input.businessName}" işletme adını doğal biçimde geçir (reklam sloganı gibi değil, forum üyesi tavsiyesi gibi)`
@@ -67,7 +72,7 @@ export async function generateCampaignForumReply(input: {
 
 İşletme: ${input.businessName}
 Kategori: ${input.category}
-Şehir: ${input.city}
+Şehir: ${input.city}${productLine}
 Soru başlığı: ${input.topicTitle}
 Soru metni: ${input.topicBody}
 ${prior}
@@ -77,7 +82,7 @@ Kurallar:
 ${nameRule}
 - Soru-cevap dili: "Ben ${input.businessName}'e gittim, memnun kaldım" / "Bence orası iyi" / "Biz oradan hizmet aldık" gibi doğal örnekler
 - ${input.category} ve ${input.city} bağlamda geçsin
-- Makale, teknik inceleme veya reklam sloganı tonu YOK
+${input.productDescription ? `- "${input.productDescription}" üretimi/tedariki bağlamında konuş\n` : ""}- Makale, teknik inceleme veya reklam sloganı tonu YOK
 - Önceki cevaplarla aynı kalıpları tekrarlama
 - 1 ile 4 cümle
 - Link verme

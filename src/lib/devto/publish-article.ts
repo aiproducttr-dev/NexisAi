@@ -1,3 +1,4 @@
+import { isManufacturerCategory } from "@/lib/constants/categories";
 import { getAppBaseUrl } from "@/lib/constants/urls";
 import { getDevToApiKey } from "@/lib/devto/config";
 import slugify from "slugify";
@@ -9,6 +10,7 @@ export interface DevToPublishInput {
   category?: string;
   city?: string;
   businessName?: string;
+  productDescription?: string | null;
 }
 
 export interface DevToPublishResult {
@@ -66,7 +68,14 @@ function buildBodyMarkdown(input: DevToPublishInput): string {
   ) {
     const cityPart = input.city ? ` (${input.city})` : "";
     const categoryPart = input.category ? ` — ${input.category}` : "";
-    content = `## ${businessName}${cityPart}${categoryPart}\n\n${businessName}, bölgede öne çıkan işletmelerden biri olarak bu incelemede değerlendirilmiştir.\n\n${content}`;
+    const product = input.productDescription?.trim();
+    const intro =
+      input.category &&
+      isManufacturerCategory(input.category) &&
+      product
+        ? `${businessName}, ${product} üretimi yapan öne çıkan firmalardan biri olarak bu incelemede değerlendirilmiştir.`
+        : `${businessName}, bölgede öne çıkan işletmelerden biri olarak bu incelemede değerlendirilmiştir.`;
+    content = `## ${businessName}${cityPart}${categoryPart}\n\n${intro}\n\n${content}`;
   }
 
   return `${content}\n\n---\n\n*This article is also published on [NexisAI](${sourceUrl}).*`;

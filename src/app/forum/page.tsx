@@ -1,3 +1,4 @@
+import { sortCategoryNames } from "@/lib/constants/categories";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import ForumNav from "@/components/forum/ForumNav";
@@ -58,12 +59,12 @@ export default async function ForumPage({
     .select("city")
     .order("city");
 
-  const uniqueCategories = [
+  const uniqueCategories = sortCategoryNames([
     ...new Set([
       ...allCategories,
       ...(topics?.map((t) => t.category) ?? []),
     ]),
-  ].sort();
+  ]);
   const uniqueCities = [...new Set(cities?.map((c) => c.city) ?? [])].sort();
 
   const userLabel = profile?.full_name || user?.email;

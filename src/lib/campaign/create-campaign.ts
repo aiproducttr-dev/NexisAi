@@ -4,7 +4,12 @@ import {
   generateDevToArticle,
 } from "@/lib/ai/content-generator";
 import { generateCampaignForumQuestions } from "@/lib/ai/forum-question-generator";
+import {
+  buildManufacturerBoneQuestions,
+  type CampaignBrief,
+} from "@/lib/ai/campaign-brief";
 import type { CampaignInput } from "@/lib/campaign/validate-input";
+import { isManufacturerCategory } from "@/lib/constants/categories";
 import {
   calculateVisibilityMetrics,
   getCampaignContentPlan,
@@ -48,7 +53,8 @@ export async function createCampaignForUser(
   userId: string,
   input: CampaignInput,
 ): Promise<CreateCampaignResult> {
-  const { businessName, category, city, dailyBudget, days } = input;
+  const { businessName, category, city, dailyBudget, days, productDescription } =
+    input;
   const admin = createAdminClient();
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
   const contentPlan = getCampaignContentPlan(dailyBudget, days);
@@ -65,7 +71,13 @@ export async function createCampaignForUser(
 
   let boneQuestions: string[] = [];
 
-  if (categoryData) {
+  if (isManufacturerCategory(category) && productDescription) {
+    boneQuestions = buildManufacturerBoneQuestions(
+      productDescription,
+      city,
+      businessName,
+    );
+  } else if (categoryData) {
     const { data: questions } = await admin
       .from("bone_questions")
       .select("question_text")
@@ -83,11 +95,12 @@ export async function createCampaignForUser(
     ];
   }
 
-  const brief = {
+  const brief: CampaignBrief = {
     businessName,
     category,
     city,
     boneQuestions: boneQuestions.slice(0, contentPlan.boneQuestionDepth),
+    productDescription,
   };
 
   const sitePromises = Array.from({ length: contentPlan.siteArticleCount }, () =>
@@ -132,6 +145,7 @@ export async function createCampaignForUser(
       business_name: businessName,
       category,
       city,
+      product_description: productDescription,
       daily_budget: dailyBudget,
       days,
       total_cost: metrics.totalCost,
@@ -191,6 +205,7 @@ export async function createCampaignForUser(
             category,
             city,
             businessName,
+            productDescription,
           });
 
           if (wordpressResult) {
@@ -222,6 +237,7 @@ export async function createCampaignForUser(
             category,
             city,
             businessName,
+            productDescription,
           });
 
           if (devtoResult) {
@@ -257,6 +273,7 @@ export async function createCampaignForUser(
             category,
             city,
             businessName,
+            productDescription,
           },
           { maxAttempts: 4 },
         );
@@ -290,6 +307,7 @@ export async function createCampaignForUser(
         category,
         city,
         businessName,
+        productDescription,
       });
     } catch (wordpressError) {
       console.error("WordPress ek yayın hatası:", wordpressError);
@@ -308,6 +326,7 @@ export async function createCampaignForUser(
         category,
         city,
         businessName,
+        productDescription,
       });
     } catch (devtoError) {
       console.error("dev.to ek yayın hatası:", devtoError);
@@ -333,7 +352,7 @@ export async function createCampaignForUser(
       try {
         await replyToCampaignForumTopics(
           forumTopics,
-          { businessName, category, city },
+          { businessName, category, city, productDescription },
           replyOptions,
         );
       } catch (replyError) {

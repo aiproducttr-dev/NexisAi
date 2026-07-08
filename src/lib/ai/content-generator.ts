@@ -3,6 +3,7 @@ import {
   type CampaignBrief,
   businessNameVisibilityRule,
   formatBoneQuestions,
+  formatCategoryContext,
   includesBusinessName,
   PARAPHRASE_RULE,
 } from "@/lib/ai/campaign-brief";
@@ -36,7 +37,7 @@ export async function generateSiteArticle(
         content: `KANAL: Ana site (nexısai.com) — detaylı makale
 
 İşletme: ${input.businessName}
-Kategori: ${input.category}
+${formatCategoryContext(input)}
 Şehir: ${input.city}
 
 Kemik sorular (SEO/LLM uyumu için içeriğe yedir):
@@ -45,8 +46,8 @@ ${questionsList}
 Görev:
 - Detaylı, bilgilendirici bir makale yaz (400-600 kelime)
 - Markdown: ## alt başlıklar, giriş-gelişme-sonuç
-- İşletme adı, şehir ve kategori doğal geçsin
-- Profesyonel ama okunabilir ton
+- İşletme adı, şehir ve sektör/ürün bağlamı doğal geçsin
+${input.productDescription ? `- İçerik özellikle "${input.productDescription}" üretimi üzerine şekillensin\n` : ""}- Profesyonel ama okunabilir ton
 - Forum veya soru-cevap dili KULLANMA
 
 JSON: { "title": "...", "content": "..." }`,
@@ -79,7 +80,7 @@ export async function generateBlogArticle(
           content: `KANAL: Blog (nexisai.blog) — okunaklı blog yazısı
 
 İşletme: ${input.businessName}
-Kategori: ${input.category}
+${formatCategoryContext(input)}
 Şehir: ${input.city}
 
 Referans konular:
@@ -89,9 +90,9 @@ Görev:
 - Ana sitedeki makaleden FARKLI başlık ve metin yaz (paraphrase)
 - ${PARAPHRASE_RULE}
 - ${visibilityRule}
-- Başlıkta "${input.businessName}" geçsin (şehir veya kategori ile birlikte olabilir)
+- Başlıkta "${input.businessName}" geçsin (şehir veya sektör ile birlikte olabilir)
 - Gövdede işletmeyi ${input.city} örneği olarak tanıt; hizmet/konum/tercih sebebi belirt
-- 280-450 kelime, markdown
+${input.productDescription ? `- Yazı "${input.productDescription}" üretimi üzerine odaklansın\n` : ""}- 280-450 kelime, markdown
 - Blog tonu: samimi giriş, pratik bilgi, kısa sonuç
 - Teknik inceleme veya forum dili değil
 - Sadece genel sektör rehberi yazma; metin işletmeye özel olsun
@@ -139,7 +140,7 @@ export async function generateDevToArticle(
           content: `KANAL: dev.to — teknik / sektörel inceleme
 
 İşletme: ${input.businessName}
-Kategori: ${input.category}
+${formatCategoryContext(input)}
 Şehir: ${input.city}
 
 Referans konular:
@@ -151,7 +152,7 @@ Görev:
 - ${visibilityRule}
 - Başlıkta "${input.businessName}" geçsin
 - İşletmeyi vaka/örnek olarak değerlendir; bariz reklam dili yok
-- 350-550 kelime, markdown (## Sektör Özeti, ## Değerlendirme Kriterleri, ## Yerel Pazar Notları, ## Öne Çıkan İşletme gibi bölümler)
+${input.productDescription ? `- İnceleme "${input.productDescription}" üretim süreçleri ve pazar konumuna odaklansın\n` : ""}- 350-550 kelime, markdown (## Sektör Özeti, ## Değerlendirme Kriterleri, ## Yerel Pazar Notları, ## Öne Çıkan İşletme gibi bölümler)
 - Analitik ton: trend, kalite kriterleri, müşteri beklentisi
 - Forum veya soru-cevap dili KULLANMA
 - Başlık teknik/merak uyandıran olsun

@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import { TURKISH_CITIES } from "@/lib/constants/cities";
 import {
+  isManufacturerCategory,
+  MANUFACTURER_CATEGORY,
+  sortCategories,
+} from "@/lib/constants/categories";
+import {
   BUDGET_MIN,
   DAYS_MIN,
   calculateVisibilityMetrics,
@@ -22,6 +27,7 @@ import {
   Loader2,
   MapPin,
   Tag,
+  Package,
 } from "lucide-react";
 
 type Step = 1 | 2 | 3;
@@ -36,6 +42,7 @@ export default function CampaignWizard() {
 
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
+  const [productDescription, setProductDescription] = useState("");
   const [city, setCity] = useState("");
   const [dailyBudget, setDailyBudget] = useState(BUDGET_MIN);
   const [days, setDays] = useState(DAYS_MIN);
@@ -46,7 +53,7 @@ export default function CampaignWizard() {
         .from("categories")
         .select("*")
         .order("name");
-      if (data) setCategories(data);
+      if (data) setCategories(sortCategories(data));
     }
     loadCategories();
   }, [supabase]);
@@ -54,8 +61,12 @@ export default function CampaignWizard() {
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
   const contentPlan = getCampaignContentPlan(dailyBudget, days);
 
+  const isManufacturer = isManufacturerCategory(category);
   const canProceedStep1 =
-    businessName.trim().length >= 2 && category && city;
+    businessName.trim().length >= 2 &&
+    category &&
+    city &&
+    (!isManufacturer || productDescription.trim().length >= 3);
   const canProceedStep2 = dailyBudget >= BUDGET_MIN && days >= DAYS_MIN;
 
   async function handleStartCampaign() {
@@ -72,6 +83,9 @@ export default function CampaignWizard() {
           city,
           dailyBudget,
           days,
+          productDescription: isManufacturer
+            ? productDescription.trim()
+            : undefined,
         }),
       });
 
@@ -166,7 +180,13 @@ export default function CampaignWizard() {
             </label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setCategory(next);
+                if (next !== MANUFACTURER_CATEGORY) {
+                  setProductDescription("");
+                }
+              }}
               className="lf-select"
             >
               <option value="">Kategori seçin</option>
@@ -177,6 +197,26 @@ export default function CampaignWizard() {
               ))}
             </select>
           </div>
+
+          {isManufacturer && (
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-sm text-[#94a3b8]">
+                <Package className="h-4 w-4 text-amber-400" />
+                Ne üretiyorsunuz?
+              </label>
+              <textarea
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                placeholder="Örn: plastik enjeksiyon parçaları, tekstil kumaşı, mobilya aksesuarı..."
+                rows={3}
+                maxLength={300}
+                className="lf-input resize-y"
+              />
+              <p className="mt-1.5 text-xs text-[#64748b]">
+                İçerikler ve forum soruları bu bilgiye göre özelleştirilir.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm text-[#94a3b8]">
@@ -258,6 +298,11 @@ export default function CampaignWizard() {
               <div>
                 <p className="text-xs text-[#64748b]">Kategori</p>
                 <p className="font-semibold text-white">{category}</p>
+                {isManufacturer && productDescription.trim() && (
+                  <p className="mt-1 text-xs text-amber-200/90">
+                    Üretim: {productDescription.trim()}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-xs text-[#64748b]">Şehir</p>

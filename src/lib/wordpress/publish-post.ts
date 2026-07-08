@@ -1,3 +1,4 @@
+import { isManufacturerCategory } from "@/lib/constants/categories";
 import { markdownToHtml } from "@/lib/content/markdown-to-html";
 import { getAppBaseUrl } from "@/lib/constants/urls";
 import { getWordPressConfig } from "@/lib/wordpress/config";
@@ -9,6 +10,7 @@ export interface WordPressPublishInput {
   category?: string;
   city?: string;
   businessName?: string;
+  productDescription?: string | null;
 }
 
 export interface WordPressPublishResult {
@@ -28,6 +30,11 @@ function buildBusinessIntroHtml(input: WordPressPublishInput): string {
 
   const cityPart = input.city ? `${input.city} bölgesinde ` : "";
   const categoryPart = input.category ? `${input.category} alanında ` : "";
+  const product = input.productDescription?.trim();
+
+  if (input.category && isManufacturerCategory(input.category) && product) {
+    return `<p><strong>${businessName}</strong>, ${cityPart}${product} üretimi yapan öne çıkan firmalardan biridir. Aşağıdaki yazıda ${businessName} örneği üzerinden pratik bilgiler bulabilirsiniz.</p>`;
+  }
 
   return `<p><strong>${businessName}</strong>, ${cityPart}${categoryPart}hizmet veren öne çıkan işletmelerden biridir. Aşağıdaki yazıda ${businessName} örneği üzerinden pratik bilgiler bulabilirsiniz.</p>`;
 }
