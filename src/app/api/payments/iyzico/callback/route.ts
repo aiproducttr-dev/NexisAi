@@ -1,6 +1,14 @@
 import { getAppBaseUrl } from "@/lib/constants/urls";
 import { retrieveCheckoutForm } from "@/lib/iyzico/client";
 import { fulfillPaidCheckout } from "@/lib/iyzico/fulfill-checkout";
+import {
+  isPaymentFailed,
+  isPaymentSuccessful,
+} from "@/lib/iyzico/payment-result";
+import {
+  findCheckoutByToken,
+  markCheckoutPaid,
+} from "@/lib/iyzico/reconcile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { after, NextResponse } from "next/server";
 
@@ -17,26 +25,25 @@ function htmlRedirect(url: string) {
 }
 
 async function extractToken(request: Request): Promise<string | null> {
-  const contentType = request.headers.get("content-type") || "";
-
-  if (contentType.includes("application/x-www-form-urlencoded")) {
-    const form = await request.formData();
-    const token = form.get("token");
-    return typeof token === "string" ? token : null;
-  }
-
-  if (contentType.includes("multipart/form-data")) {
-    const form = await request.formData();
-    const token = form.get("token");
-    return typeof token === "string" ? token : null;
-  }
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get("token");
+  if (queryToken) return queryToken;
 
   try {
-    const json = (await request.json()) as { token?: string };
-    return json.token || null;
+    const raw = await request.text();
+    if (!raw) return null;
+
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("{")) {
+      const json = JSON.parse(trimmed) as { token?: string };
+      return json.token || null;
+    }
+
+    const params = new URLSearchParams(trimmed);
+    const token = params.get("token");
+    return token || null;
   } catch {
-    const url = new URL(request.url);
-    return url.searchParams.get("token");
+    return null;
   }
 }
 
@@ -55,13 +62,16 @@ async function handleCallback(request: Request) {
     const token = await extractToken(request);
 
     if (!token) {
+      console.error("iyzico callback: token bulunamadı");
       return htmlRedirect(`${baseUrl}/payment/failure?reason=missing_token`);
     }
 
-    const payment = await retrieveCheckoutForm(token);
-    const checkoutId = payment.conversationId;
+    const checkoutByToken = await findCheckoutByToken(token);
+    const payment = await retrieveCheckoutForm(token, checkoutByToken?.id);
+    const checkoutId = payment.conversationId || checkoutByToken?.id || null;
 
     if (!checkoutId) {
+      console.error("iyzico callback: checkoutId bulunamadı", payment);
       return htmlRedirect(`${baseUrl}/payment/failure?reason=checkout_not_found`);
     }
 
@@ -72,26 +82,26 @@ async function handleCallback(request: Request) {
       .eq("id", checkoutId)
       .maybeSingle();
 
-    if (payment.status !== "success" || payment.paymentStatus !== "SUCCESS") {
-      await admin
-        .from("campaign_checkouts")
-        .update({ payment_status: "failed" })
-        .eq("id", checkoutId);
+    if (!isPaymentSuccessful(payment)) {
+      console.error("iyzico callback: ödeme başarısız veya bekliyor", payment);
+
+      if (isPaymentFailed(payment)) {
+        await admin
+          .from("campaign_checkouts")
+          .update({ payment_status: "failed" })
+          .eq("id", checkoutId);
+
+        return htmlRedirect(
+          `${baseUrl}/payment/failure?checkoutId=${checkoutId}&reason=${encodeURIComponent(payment.errorMessage || "payment_failed")}`,
+        );
+      }
 
       return htmlRedirect(
-        `${baseUrl}/payment/failure?checkoutId=${checkoutId}&reason=${encodeURIComponent(payment.errorMessage || "payment_failed")}`,
+        `${baseUrl}/payment/processing?checkoutId=${checkoutId}`,
       );
     }
 
-    await admin
-      .from("campaign_checkouts")
-      .update({
-        payment_status: "paid",
-        payment_id: payment.paymentId || null,
-        paid_at: new Date().toISOString(),
-        iyzico_token: token,
-      })
-      .eq("id", checkoutId);
+    await markCheckoutPaid(checkoutId, token, payment);
 
     if (checkout?.campaign_id && checkout.content_slug) {
       return htmlRedirect(
@@ -101,7 +111,7 @@ async function handleCallback(request: Request) {
 
     after(async () => {
       try {
-        await fulfillPaidCheckout(checkoutId!);
+        await fulfillPaidCheckout(checkoutId);
       } catch (fulfillError) {
         console.error("Kampanya fulfillment hatası:", fulfillError);
       }
@@ -110,6 +120,13 @@ async function handleCallback(request: Request) {
     return htmlRedirect(`${baseUrl}/payment/processing?checkoutId=${checkoutId}`);
   } catch (error) {
     console.error("iyzico callback error:", error);
+    const url = new URL(request.url);
+    const checkoutId = url.searchParams.get("checkoutId");
+    if (checkoutId) {
+      return htmlRedirect(
+        `${baseUrl}/payment/processing?checkoutId=${checkoutId}`,
+      );
+    }
     return htmlRedirect(`${baseUrl}/payment/failure?reason=callback_error`);
   }
 }

@@ -90,6 +90,10 @@ export default function CampaignWizard() {
         throw new Error("Ödeme sayfası oluşturulamadı");
       }
 
+      if (data.checkoutId) {
+        localStorage.setItem("nexisai_checkout_id", data.checkoutId);
+      }
+
       window.location.href = data.paymentPageUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");

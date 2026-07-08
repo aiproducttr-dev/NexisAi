@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PaymentFailureRecovery from "./PaymentFailureRecovery";
 
 export default async function PaymentFailurePage({
   searchParams,
@@ -12,10 +13,11 @@ export default async function PaymentFailurePage({
       <h1 className="lf-orbitron mb-3 text-2xl font-bold text-white">
         Ödeme tamamlanamadı
       </h1>
+      <PaymentFailureRecovery checkoutId={params.checkoutId} />
       <p className="mb-6 text-sm text-[#94a3b8]">
         {params.reason === "timeout"
-          ? "Ödeme alındı ancak kampanya oluşturma uzun sürdü. Destek ile iletişime geçin veya tekrar deneyin."
-          : "Ödeme işlemi iptal edildi veya başarısız oldu. Kart bilgilerinizi kontrol edip tekrar deneyebilirsiniz."}
+          ? "Ödeme alındı ancak kampanya oluşturma uzun sürdü. Yukarıdaki doğrulama bağlantısını deneyin."
+          : "Ödeme iptal edildiyse tekrar deneyebilirsiniz. Para çekildiyse yukarıdaki bağlantı ile devam edin."}
       </p>
       <div className="flex gap-3">
         <Link

@@ -105,11 +105,19 @@ export async function initializeCheckoutForm(
 
 export async function retrieveCheckoutForm(
   token: string,
+  conversationId?: string,
 ): Promise<IyzipayResponse> {
-  return iyzicoPost(RETRIEVE_PATH, {
+  const body: Record<string, unknown> = {
     locale: "tr",
-    token,
-  });
+  };
+
+  if (conversationId) {
+    body.conversationId = conversationId;
+  }
+
+  body.token = token;
+
+  return iyzicoPost(RETRIEVE_PATH, body);
 }
 
 export const IyzicoConstants = {

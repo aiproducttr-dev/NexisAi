@@ -1,4 +1,5 @@
 import { fulfillPaidCheckout } from "@/lib/iyzico/fulfill-checkout";
+import { reconcileCheckoutPayment } from "@/lib/iyzico/reconcile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -41,14 +42,23 @@ export async function GET(request: Request) {
     }
 
     if (checkout.payment_status !== "paid") {
-      return NextResponse.json({ status: "pending_payment" });
+      const reconciled = await reconcileCheckoutPayment(checkoutId);
+      if (!reconciled.paid) {
+        return NextResponse.json({ status: "pending_payment" });
+      }
     }
 
-    if (checkout.campaign_id && checkout.content_slug) {
+    const { data: refreshed } = await admin
+      .from("campaign_checkouts")
+      .select("campaign_id, content_slug")
+      .eq("id", checkoutId)
+      .single();
+
+    if (refreshed?.campaign_id && refreshed.content_slug) {
       return NextResponse.json({
         status: "completed",
-        slug: checkout.content_slug,
-        campaignId: checkout.campaign_id,
+        slug: refreshed.content_slug,
+        campaignId: refreshed.campaign_id,
       });
     }
 
