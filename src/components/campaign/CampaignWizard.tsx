@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { TURKISH_CITIES } from "@/lib/constants/cities";
 import {
   BUDGET_MIN,
@@ -28,7 +27,6 @@ import {
 type Step = 1 | 2 | 3;
 
 export default function CampaignWizard() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [step, setStep] = useState<Step>(1);
@@ -65,7 +63,7 @@ export default function CampaignWizard() {
     setError("");
 
     try {
-      const res = await fetch("/api/campaigns", {
+      const res = await fetch("/api/payments/iyzico/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -80,13 +78,21 @@ export default function CampaignWizard() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Kampanya oluşturulamadı");
+        throw new Error(data.error || "Ödeme başlatılamadı");
       }
 
-      router.push(`/dashboard?created=${data.slug}`);
+      if (data.bypass && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return;
+      }
+
+      if (!data.paymentPageUrl) {
+        throw new Error("Ödeme sayfası oluşturulamadı");
+      }
+
+      window.location.href = data.paymentPageUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
-    } finally {
       setLoading(false);
     }
   }
@@ -313,9 +319,10 @@ export default function CampaignWizard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200/90">
-            Test modu aktif — ödeme alınmadan kampanyanız başlatılacak. İçerik
-            oluşturulup NexisAI altında yayınlanacaktır.
+          <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-100/90">
+            Ödeme iyzico güvenli ödeme altyapısı ile alınır. Onay sonrası
+            kampanyanız otomatik başlatılır ve içerikler tüm kanallara
+            yayınlanır.
           </div>
 
           <div className="flex gap-3">
@@ -339,7 +346,9 @@ export default function CampaignWizard() {
                   <span className="relative z-10">Oluşturuluyor...</span>
                 </>
               ) : (
-                <span className="relative z-10">Kampanyayı Başlat</span>
+                <span className="relative z-10">
+                  Ödeme Yap ve Başlat ({formatCurrency(metrics.totalCost)})
+                </span>
               )}
             </button>
           </div>

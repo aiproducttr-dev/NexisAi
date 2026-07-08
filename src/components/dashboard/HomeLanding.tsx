@@ -187,7 +187,7 @@ export default function HomeLanding() {
             otomatik yayın ve şeffaf yönetim — hepsi tek platformda.
           </p>
           <p className="relative mx-auto mt-2 max-w-sm text-xs text-[#64748b]">
-            Test modunda ücretsiz deneyebilirsiniz.
+    Test modunda ücretsiz deneyebilirsiniz.
           </p>
           <Link
             href={REGISTER_HREF}
