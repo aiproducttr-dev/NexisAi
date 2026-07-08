@@ -11,8 +11,8 @@ import BrandLogo from "@/components/layout/BrandLogo";
 export default function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const redirectParam = searchParams.get("redirect") || "/dashboard";
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
@@ -22,6 +22,11 @@ export default function AuthForm() {
   const [error, setError] = useState("");
 
   const supabase = createClient();
+
+  const postAuthPath =
+    mode === "login" && redirectParam === "/dashboard/new"
+      ? "/dashboard"
+      : redirectParam;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,7 +65,7 @@ export default function AuthForm() {
         if (signInError) throw signInError;
       }
 
-      router.push(redirect);
+      router.push(postAuthPath);
       router.refresh();
     } catch (err) {
       const message =

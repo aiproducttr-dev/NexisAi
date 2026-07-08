@@ -4,11 +4,17 @@ import BrandLogo from "@/components/layout/BrandLogo";
 
 interface AppNavProps {
   backLink?: { href: string; label: string };
+  logoHref?: string;
   right?: React.ReactNode;
   userLabel?: string;
 }
 
-export default function AppNav({ backLink, right, userLabel }: AppNavProps) {
+export default function AppNav({
+  backLink,
+  logoHref = "/",
+  right,
+  userLabel,
+}: AppNavProps) {
   return (
     <nav className="lf-animate-in border-b border-white/5">
       <div className="mx-auto grid max-w-7xl grid-cols-3 items-center gap-3 px-4 py-5 sm:px-6 lg:px-8">
@@ -24,7 +30,7 @@ export default function AppNav({ backLink, right, userLabel }: AppNavProps) {
           ) : null}
         </div>
 
-        <BrandLogo href="/" size="xl" centered />
+        <BrandLogo href={logoHref} size="xl" centered />
 
         <div className="flex min-w-0 items-center justify-end justify-self-end gap-2 sm:gap-3">
           {userLabel ? (

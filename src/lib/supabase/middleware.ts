@@ -88,12 +88,20 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     const redirect = url.searchParams.get("redirect");
     if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
-      url.pathname = redirect;
+      // Kayıtlı kullanıcılar önce kampanya listesini görsün
+      url.pathname =
+        redirect === "/dashboard/new" ? "/dashboard" : redirect;
       url.search = "";
     } else {
       url.pathname = forumSite ? "/forum" : "/dashboard";
       url.search = "";
     }
+    return NextResponse.redirect(url);
+  }
+
+  if (user && appSite && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

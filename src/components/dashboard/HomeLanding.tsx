@@ -17,7 +17,8 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
-const REGISTER_HREF = "/auth?mode=register&redirect=/dashboard/new";
+const REGISTER_HREF = "/auth?mode=register&redirect=/dashboard";
+const LOGIN_HREF = "/auth?redirect=/dashboard";
 
 const STEPS = [
   {
@@ -53,12 +54,20 @@ export default function HomeLanding() {
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="lf-animate-in flex flex-col items-center gap-5 py-6 sm:py-8">
           <BrandLogo href="/" size="2xl" priority centered />
-          <Link
-            href={REGISTER_HREF}
-            className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-[#e2e8f0] shadow-[0_0_20px_rgba(139,92,246,0.15)] transition hover:border-violet-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.55)] sm:shrink-0"
-          >
-            Hemen Başlayın →
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={LOGIN_HREF}
+              className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-[#94a3b8] transition hover:border-cyan-500/40 hover:text-[#e2e8f0]"
+            >
+              Giriş Yap
+            </Link>
+            <Link
+              href={REGISTER_HREF}
+              className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-[#e2e8f0] shadow-[0_0_20px_rgba(139,92,246,0.15)] transition hover:border-violet-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.55)] sm:shrink-0"
+            >
+              Hemen Başlayın →
+            </Link>
+          </div>
         </nav>
 
         <section className="grid min-h-0 items-center gap-10 pb-12 pt-2 sm:gap-12 sm:pb-16 sm:pt-4 lg:min-h-[calc(100vh-100px)] lg:grid-cols-2">

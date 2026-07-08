@@ -21,11 +21,15 @@ export default async function DashboardPage({
 
   if (!user) redirect("/auth");
 
-  const { data: campaigns } = await supabase
+  const { data: campaigns, error: campaignsError } = await supabase
     .from("campaigns")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (campaignsError) {
+    console.error("Dashboard campaigns fetch error:", campaignsError);
+  }
 
   const campaignIds = campaigns?.map((c) => c.id) ?? [];
   const { data: publishedContents } =
@@ -93,6 +97,7 @@ export default async function DashboardPage({
   return (
     <>
       <AppNav
+        logoHref="/dashboard"
         userLabel={profile?.full_name || user.email || undefined}
         right={<DashboardActions />}
       />
