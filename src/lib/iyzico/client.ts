@@ -1,30 +1,5 @@
+import { createHmac } from "crypto";
 import { getIyzicoConfig } from "@/lib/iyzico/config";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const Iyzipay = require("iyzipay") as new (config: {
-  apiKey: string;
-  secretKey: string;
-  uri: string;
-}) => IyzipayClient;
-
-interface IyzipayClient {
-  LOCALE: { TR: string; EN: string };
-  CURRENCY: { TRY: string };
-  PAYMENT_GROUP: { PRODUCT: string };
-  BASKET_ITEM_TYPE: { VIRTUAL: string };
-  checkoutFormInitialize: {
-    create: (
-      request: Record<string, unknown>,
-      callback: (err: Error | null, result: IyzipayResponse) => void,
-    ) => void;
-  };
-  checkoutForm: {
-    retrieve: (
-      request: { locale: string; token: string },
-      callback: (err: Error | null, result: IyzipayResponse) => void,
-    ) => void;
-  };
-}
 
 export interface IyzipayResponse {
   status: string;
@@ -38,60 +13,108 @@ export interface IyzipayResponse {
   paidPrice?: string;
 }
 
-function promisify<T extends IyzipayResponse>(
-  fn: (
-    request: Record<string, unknown>,
-    callback: (err: Error | null, result: T) => void,
-  ) => void,
-  request: Record<string, unknown>,
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    fn(request, (err, result) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(result);
-    });
-  });
+const INITIALIZE_PATH = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
+const RETRIEVE_PATH = "/payment/iyzipos/checkoutform/auth/ecom/detail";
+
+function formatPrice(price: number | string): string {
+  const value = parseFloat(String(price));
+  if (!Number.isFinite(value)) return String(price);
+  const result = value.toString();
+  return result.includes(".") ? result : `${result}.0`;
 }
 
-export function getIyzipayClient(): IyzipayClient {
+function generateRandomString(): string {
+  return process.hrtime()[0] + Math.random().toString(8).slice(2);
+}
+
+function generateAuthorizationHeader(
+  apiKey: string,
+  secretKey: string,
+  uri: string,
+  body: Record<string, unknown>,
+  randomString: string,
+): string {
+  const signature = createHmac("sha256", secretKey)
+    .update(randomString + uri + JSON.stringify(body))
+    .digest("hex");
+
+  const authorizationParams = [
+    `apiKey:${apiKey}`,
+    `randomKey:${randomString}`,
+    `signature:${signature}`,
+  ].join("&");
+
+  return `IYZWSv2 ${Buffer.from(authorizationParams).toString("base64")}`;
+}
+
+async function iyzicoPost(
+  path: string,
+  body: Record<string, unknown>,
+): Promise<IyzipayResponse> {
   const config = getIyzicoConfig();
   if (!config) {
     throw new Error("iyzico yapılandırması eksik");
   }
 
-  return new Iyzipay({
-    apiKey: config.apiKey,
-    secretKey: config.secretKey,
-    uri: config.baseUrl,
+  const randomString = generateRandomString();
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "x-iyzi-rnd": randomString,
+    "x-iyzi-client-version": "nexisai-iyzico-1.0.0",
+    Authorization: generateAuthorizationHeader(
+      config.apiKey,
+      config.secretKey,
+      path,
+      body,
+      randomString,
+    ),
+  };
+
+  const response = await fetch(`${config.baseUrl}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
   });
+
+  const text = await response.text();
+  let parsed: IyzipayResponse;
+
+  try {
+    parsed = JSON.parse(text) as IyzipayResponse;
+  } catch {
+    throw new Error(
+      `iyzico yanıtı okunamadı (${response.status}): ${text.slice(0, 200)}`,
+    );
+  }
+
+  return parsed;
 }
 
 export async function initializeCheckoutForm(
   request: Record<string, unknown>,
 ): Promise<IyzipayResponse> {
-  const client = getIyzipayClient();
-  return promisify(client.checkoutFormInitialize.create.bind(client.checkoutFormInitialize), request);
+  const body = {
+    ...request,
+    price: formatPrice(request.price as string | number),
+    paidPrice: formatPrice(request.paidPrice as string | number),
+  };
+
+  return iyzicoPost(INITIALIZE_PATH, body);
 }
 
 export async function retrieveCheckoutForm(
   token: string,
 ): Promise<IyzipayResponse> {
-  const client = getIyzipayClient();
-  const request = {
-    locale: client.LOCALE.TR,
+  return iyzicoPost(RETRIEVE_PATH, {
+    locale: "tr",
     token,
-  };
-
-  return new Promise((resolve, reject) => {
-    client.checkoutForm.retrieve(
-      request,
-      (err: Error | null, result: IyzipayResponse) => {
-        if (err) reject(err);
-        else resolve(result);
-      },
-    );
   });
 }
+
+export const IyzicoConstants = {
+  LOCALE_TR: "tr",
+  CURRENCY_TRY: "TRY",
+  PAYMENT_GROUP_PRODUCT: "PRODUCT",
+  BASKET_ITEM_VIRTUAL: "VIRTUAL",
+} as const;

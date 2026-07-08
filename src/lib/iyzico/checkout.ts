@@ -1,7 +1,7 @@
 import { calculateVisibilityMetrics } from "@/lib/constants/metrics";
 import { getAppBaseUrl } from "@/lib/constants/urls";
 import type { CampaignInput } from "@/lib/campaign/validate-input";
-import { getIyzipayClient } from "@/lib/iyzico/client";
+import { IyzicoConstants } from "@/lib/iyzico/client";
 
 export interface CheckoutBuyer {
   id: string;
@@ -32,7 +32,8 @@ function splitName(fullName: string | null, fallback: string): {
 }
 
 function formatPrice(amount: number): string {
-  return amount.toFixed(2);
+  const result = amount.toFixed(2);
+  return result.endsWith(".00") ? `${amount.toFixed(0)}.0` : result;
 }
 
 export function buildCheckoutInitializeRequest(
@@ -40,19 +41,18 @@ export function buildCheckoutInitializeRequest(
   input: CampaignInput,
   buyer: CheckoutBuyer,
 ) {
-  const client = getIyzipayClient();
   const metrics = calculateVisibilityMetrics(input.dailyBudget, input.days);
   const { name, surname } = splitName(buyer.fullName, input.businessName);
   const address = `${input.city}, Turkiye`;
 
   return {
-    locale: client.LOCALE.TR,
+    locale: IyzicoConstants.LOCALE_TR,
     conversationId: checkoutId,
     price: formatPrice(metrics.totalCost),
     paidPrice: formatPrice(metrics.totalCost),
-    currency: client.CURRENCY.TRY,
+    currency: IyzicoConstants.CURRENCY_TRY,
     basketId: checkoutId,
-    paymentGroup: client.PAYMENT_GROUP.PRODUCT,
+    paymentGroup: IyzicoConstants.PAYMENT_GROUP_PRODUCT,
     callbackUrl: `${getAppBaseUrl()}/api/payments/iyzico/callback`,
     enabledInstallments: [1],
     buyer: {
@@ -90,7 +90,7 @@ export function buildCheckoutInitializeRequest(
         name: `NexisAI Kampanya - ${input.businessName}`,
         category1: input.category,
         category2: input.city,
-        itemType: client.BASKET_ITEM_TYPE.VIRTUAL,
+        itemType: IyzicoConstants.BASKET_ITEM_VIRTUAL,
         price: formatPrice(metrics.totalCost),
       },
     ],
