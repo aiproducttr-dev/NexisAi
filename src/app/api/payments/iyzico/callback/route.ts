@@ -1,6 +1,5 @@
 import { getAppBaseUrl } from "@/lib/constants/urls";
 import { retrieveCheckoutForm } from "@/lib/iyzico/client";
-import { fulfillPaidCheckout } from "@/lib/iyzico/fulfill-checkout";
 import {
   isPaymentFailed,
   isPaymentSuccessful,
@@ -9,10 +8,11 @@ import {
   findCheckoutByToken,
   markCheckoutPaid,
 } from "@/lib/iyzico/reconcile";
+import { scheduleFulfillmentIfNeeded } from "@/lib/iyzico/schedule-fulfillment";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 function htmlRedirect(url: string) {
   return new NextResponse(
@@ -109,13 +109,7 @@ async function handleCallback(request: Request) {
       );
     }
 
-    after(async () => {
-      try {
-        await fulfillPaidCheckout(checkoutId);
-      } catch (fulfillError) {
-        console.error("Kampanya fulfillment hatası:", fulfillError);
-      }
-    });
+    await scheduleFulfillmentIfNeeded(checkoutId);
 
     return htmlRedirect(`${baseUrl}/payment/processing?checkoutId=${checkoutId}`);
   } catch (error) {

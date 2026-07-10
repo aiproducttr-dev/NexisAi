@@ -17,8 +17,9 @@ export default function PaymentProcessingPage() {
     }
 
     let attempts = 0;
-    const maxAttempts = 90;
+    const maxAttempts = 150;
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
     const poll = async () => {
       if (cancelled) return;
@@ -27,10 +28,11 @@ export default function PaymentProcessingPage() {
       try {
         const res = await fetch(
           `/api/payments/iyzico/status?checkoutId=${checkoutId}`,
+          { cache: "no-store" },
         );
         const data = await res.json();
 
-        if (data.status === "completed" && data.slug) {
+        if (res.ok && data.status === "completed" && data.slug) {
           router.replace(`/dashboard?created=${data.slug}`);
           return;
         }
@@ -40,12 +42,16 @@ export default function PaymentProcessingPage() {
           return;
         }
 
-        if (data.status === "processing" || data.status === "pending_payment") {
+        if (data.status === "processing") {
           setMessage(
-            data.status === "processing"
-              ? "Kampanyanız oluşturuluyor, içerikler yayınlanıyor…"
-              : "Ödeme doğrulanıyor…",
+            attempts > 15
+              ? "Kampanyanız oluşturuluyor, içerikler yayınlanıyor… Bu işlem birkaç dakika sürebilir."
+              : "Kampanyanız oluşturuluyor, içerikler yayınlanıyor…",
           );
+        } else if (data.status === "pending_payment") {
+          setMessage("Ödeme doğrulanıyor…");
+        } else if (!res.ok) {
+          setMessage("Bağlantı kontrol ediliyor, lütfen bekleyin…");
         }
 
         if (attempts >= maxAttempts) {
@@ -55,7 +61,8 @@ export default function PaymentProcessingPage() {
           return;
         }
 
-        setTimeout(poll, 2000);
+        const delay = data.status === "processing" ? 3000 : 2000;
+        pollTimer = setTimeout(poll, delay);
       } catch {
         if (attempts >= maxAttempts) {
           router.replace(
@@ -63,7 +70,9 @@ export default function PaymentProcessingPage() {
           );
           return;
         }
-        setTimeout(poll, 2000);
+
+        setMessage("Bağlantı kontrol ediliyor, lütfen bekleyin…");
+        pollTimer = setTimeout(poll, 3000);
       }
     };
 
@@ -71,6 +80,7 @@ export default function PaymentProcessingPage() {
 
     return () => {
       cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
     };
   }, [checkoutId, router]);
 
