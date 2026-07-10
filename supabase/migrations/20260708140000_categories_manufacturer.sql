@@ -7,12 +7,12 @@ alter table public.campaign_checkouts
 
 insert into public.categories (name, slug)
 values
-  ('Güvenlik Filmi', 'guvenlik-filmi'),
+  ('Güvenlik filesi', 'guvenlik-filesi'),
   ('Hırdavatçı', 'hirdavatci'),
   ('Üretici Firma', 'uretici-firma')
 on conflict (slug) do nothing;
 
--- Güvenlik Filmi kemik soruları
+-- Güvenlik filesi kemik soruları
 insert into public.bone_questions (category_id, question_text, sort_order)
 select c.id, q.question_text, q.sort_order
 from public.categories c
@@ -24,7 +24,7 @@ cross join (
     ('Güneşten koruyan cam filmi hangi markayı önerirsiniz?', 4),
     ('Güvenlik filmi montajı ne kadar sürer, garanti veren yer var mı?', 5)
 ) as q(question_text, sort_order)
-where c.slug = 'guvenlik-filmi'
+where c.slug = 'guvenlik-filesi'
   and not exists (
     select 1 from public.bone_questions bq
     where bq.category_id = c.id and bq.question_text = q.question_text
