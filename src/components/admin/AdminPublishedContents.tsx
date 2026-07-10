@@ -1,22 +1,12 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ExternalLink } from "lucide-react";
+import AdminPanelLogoutButton from "@/components/admin/AdminPanelLogoutButton";
 import AppNav from "@/components/layout/AppNav";
-import { isAdminEmail } from "@/lib/auth/admin";
 import { formatCurrency } from "@/lib/constants/metrics";
 import { forumTopicUrl } from "@/lib/constants/urls";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function AdminPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth?redirect=/admin");
-  if (!isAdminEmail(user.email)) redirect("/dashboard");
-
+export default async function AdminPublishedContents() {
   const admin = createAdminClient();
 
   const { data: campaigns } = await admin
@@ -27,7 +17,9 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false });
 
   const campaignIds = campaigns?.map((campaign) => campaign.id) ?? [];
-  const userIds = [...new Set(campaigns?.map((campaign) => campaign.user_id) ?? [])];
+  const userIds = [
+    ...new Set(campaigns?.map((campaign) => campaign.user_id) ?? []),
+  ];
 
   const { data: profiles } =
     userIds.length > 0
@@ -88,9 +80,8 @@ export default async function AdminPage() {
   return (
     <>
       <AppNav
-        logoHref="/admin"
-        backLink={{ href: "/dashboard", label: "Dashboard" }}
-        userLabel={user.email ?? undefined}
+        logoHref="/om-admin-panel"
+        right={<AdminPanelLogoutButton />}
       />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

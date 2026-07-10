@@ -1,6 +1,6 @@
 import FuturisticShell from "@/components/layout/FuturisticShell";
 
-export default function AdminLayout({
+export default function OmAdminPanelLayout({
   children,
 }: {
   children: React.ReactNode;
