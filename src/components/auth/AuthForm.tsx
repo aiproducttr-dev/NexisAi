@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import {
+  trackMetaCompleteRegistration,
+  trackMetaInitiateCheckout,
+} from "@/lib/analytics/meta-pixel";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppNav from "@/components/layout/AppNav";
 import BrandLogo from "@/components/layout/BrandLogo";
@@ -57,6 +61,8 @@ export default function AuthForm() {
         });
 
         if (loginError) throw loginError;
+
+        trackMetaCompleteRegistration();
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,

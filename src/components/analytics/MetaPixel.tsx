@@ -1,8 +1,7 @@
+import { META_PIXEL_ID } from "@/lib/analytics/meta-pixel";
 import { isAppHost } from "@/lib/constants/urls";
 import { headers } from "next/headers";
 import Script from "next/script";
-
-const META_PIXEL_ID = "1791339435183782";
 
 export default async function MetaPixel() {
   const host = (await headers()).get("host") ?? "";

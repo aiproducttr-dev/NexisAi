@@ -63,6 +63,10 @@ export async function GET(request: Request) {
           status: "completed",
           slug: existing.slug,
           campaignId: existing.campaignId,
+          value: existing.value,
+          currency: existing.currency,
+          contentName: existing.contentName,
+          checkoutId: existing.checkoutId,
         },
         { headers: { "Cache-Control": "no-store" } },
       );
@@ -78,6 +82,10 @@ export async function GET(request: Request) {
             status: "completed",
             slug: completed.slug,
             campaignId: completed.campaignId,
+            value: completed.value,
+            currency: completed.currency,
+            contentName: completed.contentName,
+            checkoutId: completed.checkoutId,
           },
           { headers: { "Cache-Control": "no-store" } },
         );

@@ -19,6 +19,10 @@ import MetricsPreview, {
   DaysSlider,
 } from "@/components/campaign/MetricsPreview";
 import { createClient } from "@/lib/supabase/client";
+import {
+  trackMetaInitiateCheckout,
+  trackMetaPurchaseOnce,
+} from "@/lib/analytics/meta-pixel";
 import type { Category } from "@/lib/types";
 import {
   ArrowLeft,
@@ -103,6 +107,12 @@ export default function CampaignWizard() {
       if (!data.paymentPageUrl) {
         throw new Error("Ödeme sayfası oluşturulamadı");
       }
+
+      trackMetaInitiateCheckout({
+        value: metrics.totalCost,
+        contentName: businessName.trim(),
+        checkoutId: data.checkoutId,
+      });
 
       if (data.checkoutId) {
         localStorage.setItem("nexisai_checkout_id", data.checkoutId);

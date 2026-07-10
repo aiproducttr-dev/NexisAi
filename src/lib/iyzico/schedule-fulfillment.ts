@@ -69,11 +69,15 @@ export async function scheduleFulfillmentIfNeeded(
 export async function getCompletedCheckoutResult(checkoutId: string): Promise<{
   slug: string;
   campaignId: string;
+  value: number;
+  currency: string;
+  contentName: string;
+  checkoutId: string;
 } | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("campaign_checkouts")
-    .select("campaign_id, content_slug")
+    .select("id, campaign_id, content_slug, total_cost, business_name")
     .eq("id", checkoutId)
     .single();
 
@@ -81,6 +85,10 @@ export async function getCompletedCheckoutResult(checkoutId: string): Promise<{
     return {
       slug: data.content_slug,
       campaignId: data.campaign_id,
+      value: Number(data.total_cost),
+      currency: "TRY",
+      contentName: data.business_name,
+      checkoutId: data.id,
     };
   }
 

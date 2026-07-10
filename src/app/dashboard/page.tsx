@@ -5,6 +5,7 @@ import { Plus, ExternalLink, TrendingUp, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/constants/metrics";
 import { forumTopicUrl } from "@/lib/constants/urls";
 import DashboardActions from "@/components/dashboard/DashboardActions";
+import MetaPurchaseTracker from "@/components/analytics/MetaPurchaseTracker";
 import AppNav from "@/components/layout/AppNav";
 
 export default async function DashboardPage({
@@ -72,9 +73,18 @@ export default async function DashboardPage({
   let createdForumTopics: { slug: string; title: string }[] = [];
   let createdWordpressUrl: string | null = null;
   let createdDevtoUrl: string | null = null;
+  let createdCampaign:
+    | {
+        id: string;
+        content_slug: string | null;
+        total_cost: number;
+        business_name: string;
+      }
+    | null = null;
   if (params.created) {
     const campaign = campaigns?.find((c) => c.content_slug === params.created);
     if (campaign) {
+      createdCampaign = campaign;
       createdForumTopics = forumTopicsByCampaign.get(campaign.id) ?? [];
     }
 
@@ -96,6 +106,13 @@ export default async function DashboardPage({
 
   return (
     <>
+      {createdCampaign?.content_slug && (
+        <MetaPurchaseTracker
+          dedupeKey={createdCampaign.content_slug}
+          value={Number(createdCampaign.total_cost)}
+          contentName={createdCampaign.business_name}
+        />
+      )}
       <AppNav
         logoHref="/dashboard"
         userLabel={profile?.full_name || user.email || undefined}

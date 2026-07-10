@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { trackMetaPurchaseOnce } from "@/lib/analytics/meta-pixel";
 
 export default function PaymentProcessingPage() {
   const router = useRouter();
@@ -33,6 +34,15 @@ export default function PaymentProcessingPage() {
         const data = await res.json();
 
         if (res.ok && data.status === "completed" && data.slug) {
+          if (data.value && checkoutId) {
+            trackMetaPurchaseOnce(checkoutId, {
+              value: Number(data.value),
+              currency: data.currency ?? "TRY",
+              checkoutId,
+              contentName: data.contentName,
+            }, [data.slug]);
+          }
+
           router.replace(`/dashboard?created=${data.slug}`);
           return;
         }
