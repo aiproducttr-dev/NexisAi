@@ -12,6 +12,7 @@ import {
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppNav from "@/components/layout/AppNav";
 import BrandLogo from "@/components/layout/BrandLogo";
+import SupportContact from "@/components/layout/SupportContact";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -221,6 +222,8 @@ export default function AuthForm() {
                   </>
                 )}
               </p>
+
+              <SupportContact className="mt-4 text-center" />
             </div>
           </div>
         </div>

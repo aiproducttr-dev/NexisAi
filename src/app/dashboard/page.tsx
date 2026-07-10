@@ -7,6 +7,7 @@ import { forumTopicUrl } from "@/lib/constants/urls";
 import DashboardActions from "@/components/dashboard/DashboardActions";
 import MetaPurchaseTracker from "@/components/analytics/MetaPurchaseTracker";
 import AppNav from "@/components/layout/AppNav";
+import SupportContact from "@/components/layout/SupportContact";
 
 export default async function DashboardPage({
   searchParams,
@@ -186,6 +187,7 @@ export default async function DashboardPage({
             <p className="mt-2 text-sm text-[#94a3b8]">
               Kampanyalarınızı görüntüleyin ve yönetin.
             </p>
+            <SupportContact className="mt-3" />
           </div>
           <Link
             href="/dashboard/new"

@@ -2,6 +2,7 @@
 export const APP_DOMAIN = "xn--nexsai-r9a.com";
 export const APP_DOMAIN_WWW = "www.xn--nexsai-r9a.com";
 export const APP_DOMAIN_UNICODE = "nexısai.com";
+export const SUPPORT_EMAIL = `support@${APP_DOMAIN_UNICODE}`;
 export const APP_URL = "https://xn--nexsai-r9a.com";
 export const APP_URL_WWW = "https://www.xn--nexsai-r9a.com";
 
