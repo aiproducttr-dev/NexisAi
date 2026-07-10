@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { resolveRegistrationSource } from "@/lib/auth/registration-source";
 import { createClient } from "@/lib/supabase/client";
 import {
   trackMetaCompleteRegistration,
@@ -32,6 +33,10 @@ export default function AuthForm() {
       ? "/dashboard"
       : redirectParam;
 
+  const registrationSource = resolveRegistrationSource({
+    redirect: redirectParam,
+  });
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -46,6 +51,8 @@ export default function AuthForm() {
             email: email.trim().toLowerCase(),
             password,
             fullName: fullName.trim(),
+            redirect: redirectParam,
+            registrationSource,
           }),
         });
 

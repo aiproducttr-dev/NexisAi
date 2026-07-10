@@ -3,6 +3,7 @@ export interface Profile {
   full_name: string | null;
   email: string | null;
   created_at: string;
+  registration_source?: "nexisai" | "nexisaiform" | null;
 }
 
 export interface Category {

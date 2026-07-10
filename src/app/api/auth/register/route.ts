@@ -1,9 +1,11 @@
+import { resolveRegistrationSource } from "@/lib/auth/registration-source";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { email, password, fullName } = await request.json();
+    const body = await request.json();
+    const { email, password, fullName, redirect, registrationSource } = body;
 
     if (!email || !password || !fullName) {
       return NextResponse.json(
@@ -14,10 +16,17 @@ export async function POST(request: Request) {
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: "Şifre en az 6 karakter olmalı" },
+        { error: "Şifre en az 6 karakter olmalıdır" },
         { status: 400 }
       );
     }
+
+    const source = resolveRegistrationSource({
+      redirect,
+      registrationSource,
+      host: request.headers.get("host"),
+      referer: request.headers.get("referer"),
+    });
 
     const admin = createAdminClient();
 
@@ -25,7 +34,10 @@ export async function POST(request: Request) {
       email: String(email).trim().toLowerCase(),
       password,
       email_confirm: true,
-      user_metadata: { full_name: String(fullName).trim() },
+      user_metadata: {
+        full_name: String(fullName).trim(),
+        registration_source: source,
+      },
     });
 
     if (error) {
@@ -46,10 +58,11 @@ export async function POST(request: Request) {
         id: data.user.id,
         full_name: String(fullName).trim(),
         email: String(email).trim().toLowerCase(),
+        registration_source: source,
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, registrationSource: source });
   } catch {
     return NextResponse.json({ error: "Kayıt başarısız" }, { status: 500 });
   }
