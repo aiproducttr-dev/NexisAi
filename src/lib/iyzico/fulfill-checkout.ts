@@ -53,15 +53,27 @@ export async function fulfillPaidCheckout(checkoutId: string): Promise<{
     productDescription: row.product_description,
   };
 
-  const result = await createCampaignForUser(row.user_id, input);
+  const result = await createCampaignForUser(row.user_id, input, {
+    onCampaignReady: async ({ campaignId, slug }) => {
+      await admin
+        .from("campaign_checkouts")
+        .update({
+          campaign_id: campaignId,
+          content_slug: slug,
+        })
+        .eq("id", checkoutId);
+    },
+  });
 
-  await admin
-    .from("campaign_checkouts")
-    .update({
-      campaign_id: result.campaignId,
-      content_slug: result.slug,
-    })
-    .eq("id", checkoutId);
+  if (!row.campaign_id || !row.content_slug) {
+    await admin
+      .from("campaign_checkouts")
+      .update({
+        campaign_id: result.campaignId,
+        content_slug: result.slug,
+      })
+      .eq("id", checkoutId);
+  }
 
   return { slug: result.slug, campaignId: result.campaignId };
 }

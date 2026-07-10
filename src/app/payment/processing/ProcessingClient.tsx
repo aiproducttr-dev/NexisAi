@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -10,6 +11,7 @@ export default function PaymentProcessingPage() {
   const searchParams = useSearchParams();
   const checkoutId = searchParams.get("checkoutId");
   const [message, setMessage] = useState("Ödemeniz doğrulanıyor…");
+  const [showManualLink, setShowManualLink] = useState(false);
 
   useEffect(() => {
     if (!checkoutId) {
@@ -18,13 +20,17 @@ export default function PaymentProcessingPage() {
     }
 
     let attempts = 0;
-    const maxAttempts = 150;
+    const maxAttempts = 180;
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
     const poll = async () => {
       if (cancelled) return;
       attempts += 1;
+
+      if (attempts === 20) {
+        setShowManualLink(true);
+      }
 
       try {
         const res = await fetch(
@@ -35,12 +41,16 @@ export default function PaymentProcessingPage() {
 
         if (res.ok && data.status === "completed" && data.slug) {
           if (data.value && checkoutId) {
-            trackMetaPurchaseOnce(checkoutId, {
-              value: Number(data.value),
-              currency: data.currency ?? "TRY",
+            trackMetaPurchaseOnce(
               checkoutId,
-              contentName: data.contentName,
-            }, [data.slug]);
+              {
+                value: Number(data.value),
+                currency: data.currency ?? "TRY",
+                checkoutId,
+                contentName: data.contentName,
+              },
+              [data.slug],
+            );
           }
 
           router.replace(`/dashboard?created=${data.slug}`);
@@ -54,7 +64,7 @@ export default function PaymentProcessingPage() {
 
         if (data.status === "processing") {
           setMessage(
-            attempts > 15
+            attempts > 10
               ? "Kampanyanız oluşturuluyor, içerikler yayınlanıyor… Bu işlem birkaç dakika sürebilir."
               : "Kampanyanız oluşturuluyor, içerikler yayınlanıyor…",
           );
@@ -101,6 +111,20 @@ export default function PaymentProcessingPage() {
         İşleminiz devam ediyor
       </h1>
       <p className="max-w-md text-sm text-[#94a3b8]">{message}</p>
+      {showManualLink && checkoutId && (
+        <div className="mt-6 max-w-md rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
+          <p className="mb-3">
+            İşlem arka planda devam ediyor. Birkaç dakika sonra dashboard&apos;da
+            kampanyanızı görebilirsiniz.
+          </p>
+          <Link
+            href={`/dashboard`}
+            className="lf-btn-primary inline-block rounded-xl px-5 py-2.5 font-semibold text-white"
+          >
+            Dashboard&apos;a Git
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -52,6 +52,12 @@ function buildSlug(
 export async function createCampaignForUser(
   userId: string,
   input: CampaignInput,
+  options?: {
+    onCampaignReady?: (result: {
+      campaignId: string;
+      slug: string;
+    }) => Promise<void>;
+  },
 ): Promise<CreateCampaignResult> {
   const { businessName, category, city, dailyBudget, days, productDescription } =
     input;
@@ -180,6 +186,13 @@ export async function createCampaignForUser(
   }
 
   await insertPublishedContent(siteContent.title, siteContent.content, slug);
+
+  if (options?.onCampaignReady) {
+    await options.onCampaignReady({
+      campaignId: campaign.id,
+      slug,
+    });
+  }
 
   for (let i = 1; i < siteArticles.length; i++) {
     const extra = siteArticles[i]!;
