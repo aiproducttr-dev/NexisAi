@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Orbitron } from "next/font/google";
 import { ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
+import SupportContact from "@/components/layout/SupportContact";
 
 import FuturisticScene3D from "@/components/landing/FuturisticScene3D";
 import LandingAppFeatures from "@/components/landing/LandingAppFeatures";
@@ -68,6 +69,7 @@ export default function HomeLanding() {
               Hemen Başlayın →
             </Link>
           </div>
+          <SupportContact className="text-center" />
         </nav>
 
         <section className="grid min-h-0 items-center gap-10 pb-12 pt-2 sm:gap-12 sm:pb-16 sm:pt-4 lg:min-h-[calc(100vh-100px)] lg:grid-cols-2">
