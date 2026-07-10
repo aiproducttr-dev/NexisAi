@@ -5,6 +5,7 @@ import { Plus, ExternalLink, TrendingUp, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/constants/metrics";
 import { forumTopicUrl } from "@/lib/constants/urls";
 import DashboardActions from "@/components/dashboard/DashboardActions";
+import CheckoutFulfillmentTracker from "@/components/dashboard/CheckoutFulfillmentTracker";
 import MetaPurchaseTracker from "@/components/analytics/MetaPurchaseTracker";
 import AppNav from "@/components/layout/AppNav";
 import SupportContact from "@/components/layout/SupportContact";
@@ -12,7 +13,7 @@ import SupportContact from "@/components/layout/SupportContact";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; checkoutId?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
@@ -121,6 +122,10 @@ export default async function DashboardPage({
       />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {params.checkoutId && !params.created && (
+          <CheckoutFulfillmentTracker checkoutId={params.checkoutId} />
+        )}
+
         {params.created && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm text-emerald-300">
@@ -314,7 +319,7 @@ export default async function DashboardPage({
             );
             })}
           </div>
-        ) : (
+        ) : params.checkoutId ? null : (
           <div className="lf-card-border rounded-[20px] p-[2px]">
             <div className="lf-panel p-12 text-center">
               <p className="text-4xl">📋</p>

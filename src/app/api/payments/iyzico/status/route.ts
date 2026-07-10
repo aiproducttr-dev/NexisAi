@@ -1,4 +1,3 @@
-import { fulfillPaidCheckout } from "@/lib/iyzico/fulfill-checkout";
 import { reconcileCheckoutPayment } from "@/lib/iyzico/reconcile";
 import {
   getCompletedCheckoutResult,
@@ -9,7 +8,6 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
 
 export async function GET(request: Request) {
   try {
@@ -30,7 +28,9 @@ export async function GET(request: Request) {
     const admin = createAdminClient();
     const { data: checkout, error } = await admin
       .from("campaign_checkouts")
-      .select("id, user_id, payment_status, campaign_id, content_slug")
+      .select(
+        "id, user_id, payment_status, campaign_id, content_slug, business_name, total_cost",
+      )
       .eq("id", checkoutId)
       .single();
 
@@ -72,28 +72,32 @@ export async function GET(request: Request) {
       );
     }
 
-    const fulfillmentState = await scheduleFulfillmentIfNeeded(checkoutId);
+    await scheduleFulfillmentIfNeeded(checkoutId);
 
-    if (fulfillmentState === "completed") {
-      const completed = await getCompletedCheckoutResult(checkoutId);
-      if (completed) {
-        return NextResponse.json(
-          {
-            status: "completed",
-            slug: completed.slug,
-            campaignId: completed.campaignId,
-            value: completed.value,
-            currency: completed.currency,
-            contentName: completed.contentName,
-            checkoutId: completed.checkoutId,
-          },
-          { headers: { "Cache-Control": "no-store" } },
-        );
-      }
+    const completed = await getCompletedCheckoutResult(checkoutId);
+    if (completed) {
+      return NextResponse.json(
+        {
+          status: "completed",
+          slug: completed.slug,
+          campaignId: completed.campaignId,
+          value: completed.value,
+          currency: completed.currency,
+          contentName: completed.contentName,
+          checkoutId: completed.checkoutId,
+        },
+        { headers: { "Cache-Control": "no-store" } },
+      );
     }
 
     return NextResponse.json(
-      { status: "processing" },
+      {
+        status: "fulfilling",
+        checkoutId,
+        contentName: checkout.business_name,
+        value: Number(checkout.total_cost),
+        currency: "TRY",
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
