@@ -60,14 +60,9 @@ export default async function NewCampaignPage() {
                   <span className="font-medium text-white">
                     {campaign.business_name}
                   </span>
-                  {campaign.content_slug && (
-                    <Link
-                      href={`/content/${campaign.content_slug}`}
-                      className="text-cyan-300 hover:underline"
-                    >
-                      İçeriği görüntüle
-                    </Link>
-                  )}
+                  <span className="text-xs text-[#64748b]">
+                    {campaign.status === "active" ? "Aktif" : campaign.status}
+                  </span>
                 </li>
               ))}
             </ul>

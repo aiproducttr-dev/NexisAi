@@ -7,12 +7,12 @@ import {
   MANUFACTURER_CATEGORY,
   sortCategories,
 } from "@/lib/constants/categories";
+import { formatDailyVisibilityIncrease } from "@/lib/auth/admin";
 import {
   BUDGET_MIN,
   DAYS_MIN,
   calculateVisibilityMetrics,
   formatCurrency,
-  getCampaignContentPlan,
 } from "@/lib/constants/metrics";
 import MetricsPreview, {
   BudgetSlider,
@@ -63,7 +63,6 @@ export default function CampaignWizard() {
   }, [supabase]);
 
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
-  const contentPlan = getCampaignContentPlan(dailyBudget, days);
 
   const isManufacturer = isManufacturerCategory(category);
   const canProceedStep1 =
@@ -340,41 +339,13 @@ export default function CampaignWizard() {
             </div>
             <hr className="border-white/5" />
             <div className="text-center">
-              <p className="text-sm text-[#94a3b8]">Tahmini Görünürlük Artışı</p>
+              <p className="text-sm text-[#94a3b8]">Günlük Tahmini Artış</p>
               <p className="lf-orbitron text-4xl font-bold text-emerald-400">
-                +%{metrics.visibilityIncrease}
+                {formatDailyVisibilityIncrease(metrics.visibilityIncrease, days)}%
               </p>
-            </div>
-            <hr className="border-white/5" />
-            <div className="grid gap-3 text-sm sm:grid-cols-2">
-              <div>
-                <p className="text-xs text-[#64748b]">İçerik paketi</p>
-                <p className="font-semibold text-white">
-                  {contentPlan.estimatedContentPieces} parça
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-[#64748b]">Sistem agresifliği</p>
-                <p className="font-semibold text-amber-300">
-                  {contentPlan.aggressiveness}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-[#64748b]">Forum</p>
-                <p className="font-semibold text-white">
-                  {contentPlan.forumQuestionCount} soru ·{" "}
-                  {contentPlan.estimatedReplyRange.min}–
-                  {contentPlan.estimatedReplyRange.max} cevap
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-[#64748b]">Kanallar</p>
-                <p className="font-semibold text-white">
-                  Site {contentPlan.siteArticleCount} · Blog{" "}
-                  {contentPlan.blogArticleCount} · dev.to{" "}
-                  {contentPlan.devToArticleCount}
-                </p>
-              </div>
+              <p className="mt-1 text-xs text-[#64748b]">
+                Kampanya toplamı +%{metrics.visibilityIncrease}
+              </p>
             </div>
           </div>
 
