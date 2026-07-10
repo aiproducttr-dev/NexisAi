@@ -8,9 +8,8 @@ import {
   DAYS_MIN,
   calculateVisibilityMetrics,
   formatCurrency,
-  getCampaignContentPlan,
 } from "@/lib/constants/metrics";
-import { TrendingUp, Users, MessageSquare, BarChart3, HelpCircle, Zap, FileText } from "lucide-react";
+import { TrendingUp, Users, MessageSquare, BarChart3, HelpCircle } from "lucide-react";
 
 interface MetricsPreviewProps {
   dailyBudget: number;
@@ -23,7 +22,6 @@ export default function MetricsPreview({
 }: MetricsPreviewProps) {
   const [animated, setAnimated] = useState(false);
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
-  const contentPlan = getCampaignContentPlan(dailyBudget, days);
 
   useEffect(() => {
     setAnimated(false);
@@ -108,51 +106,6 @@ export default function MetricsPreview({
             <p className="lf-metric-desc">{item.description}</p>
           </div>
         ))}
-      </div>
-
-      <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <FileText className="h-4 w-4 text-cyan-400" />
-          <p className="text-sm font-medium text-cyan-300">Planlanan İçerik Paketi</p>
-        </div>
-        <div className="grid gap-3 text-sm sm:grid-cols-2">
-          <div>
-            <p className="text-[#94a3b8]">Toplam içerik parçası</p>
-            <p className="lf-orbitron font-semibold text-white">
-              {contentPlan.estimatedContentPieces} adet
-            </p>
-          </div>
-          <div>
-            <p className="text-[#94a3b8]">Forum soruları</p>
-            <p className="lf-orbitron font-semibold text-white">
-              {contentPlan.forumQuestionCount} konu
-            </p>
-          </div>
-          <div>
-            <p className="text-[#94a3b8]">Makale / blog / dev.to</p>
-            <p className="font-semibold text-white">
-              {contentPlan.siteArticleCount} / {contentPlan.blogArticleCount} /{" "}
-              {contentPlan.devToArticleCount}
-            </p>
-          </div>
-          <div>
-            <p className="text-[#94a3b8]">Forum cevapları (tahmini)</p>
-            <p className="font-semibold text-white">
-              {contentPlan.estimatedReplyRange.min}–{contentPlan.estimatedReplyRange.max}
-            </p>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center gap-2 border-t border-cyan-500/10 pt-3">
-          <Zap className="h-4 w-4 text-amber-400" />
-          <p className="text-sm text-[#cbd5e1]">
-            Sistem agresifliği:{" "}
-            <strong className="text-amber-300">{contentPlan.aggressiveness}</strong>
-            <span className="text-[#64748b]">
-              {" "}
-              (her +{formatCurrency(200)} günlük bütçe artışında yükselir)
-            </span>
-          </p>
-        </div>
       </div>
 
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
