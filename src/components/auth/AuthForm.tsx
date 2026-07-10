@@ -223,7 +223,7 @@ export default function AuthForm() {
                 )}
               </p>
 
-              <SupportContact className="mt-4 text-center" />
+              <SupportContact className="mt-6" />
             </div>
           </div>
         </div>

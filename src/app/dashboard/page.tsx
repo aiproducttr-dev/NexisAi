@@ -187,7 +187,7 @@ export default async function DashboardPage({
             <p className="mt-2 text-sm text-[#94a3b8]">
               Kampanyalarınızı görüntüleyin ve yönetin.
             </p>
-            <SupportContact className="mt-3" />
+            <SupportContact align="start" className="mt-4 max-w-md" />
           </div>
           <Link
             href="/dashboard/new"
