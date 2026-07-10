@@ -1,16 +1,17 @@
-import { reconcileCheckoutPayment } from "@/lib/iyzico/reconcile";
 import {
+  claimAndRunFulfillment,
   getCompletedCheckoutResult,
   repairCheckoutFulfillmentState,
-  scheduleFulfillmentIfNeeded,
 } from "@/lib/iyzico/schedule-fulfillment";
+import { reconcileCheckoutPayment } from "@/lib/iyzico/reconcile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const {
@@ -21,7 +22,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Oturum gerekli" }, { status: 401 });
     }
 
-    const checkoutId = new URL(request.url).searchParams.get("checkoutId");
+    const body = (await request.json()) as { checkoutId?: string };
+    const checkoutId = body.checkoutId;
+
     if (!checkoutId) {
       return NextResponse.json({ error: "checkoutId gerekli" }, { status: 400 });
     }
@@ -29,9 +32,7 @@ export async function GET(request: Request) {
     const admin = createAdminClient();
     const { data: checkout, error } = await admin
       .from("campaign_checkouts")
-      .select(
-        "id, user_id, payment_status, campaign_id, content_slug, business_name, total_cost",
-      )
+      .select("id, user_id, payment_status")
       .eq("id", checkoutId)
       .single();
 
@@ -50,10 +51,7 @@ export async function GET(request: Request) {
     if (checkout.payment_status !== "paid") {
       const reconciled = await reconcileCheckoutPayment(checkoutId);
       if (!reconciled.paid) {
-        return NextResponse.json(
-          { status: "pending_payment" },
-          { headers: { "Cache-Control": "no-store" } },
-        );
+        return NextResponse.json({ status: "pending_payment" });
       }
     }
 
@@ -61,52 +59,43 @@ export async function GET(request: Request) {
 
     const existing = await getCompletedCheckoutResult(checkoutId);
     if (existing) {
-      return NextResponse.json(
-        {
-          status: "completed",
-          slug: existing.slug,
-          campaignId: existing.campaignId,
-          value: existing.value,
-          currency: existing.currency,
-          contentName: existing.contentName,
-          checkoutId: existing.checkoutId,
-        },
-        { headers: { "Cache-Control": "no-store" } },
-      );
+      return NextResponse.json({
+        status: "completed",
+        slug: existing.slug,
+        campaignId: existing.campaignId,
+        value: existing.value,
+        currency: existing.currency,
+        contentName: existing.contentName,
+        checkoutId: existing.checkoutId,
+      });
     }
 
-    await scheduleFulfillmentIfNeeded(checkoutId);
-
-    const completed = await getCompletedCheckoutResult(checkoutId);
+    const completed = await claimAndRunFulfillment(checkoutId);
     if (completed) {
-      return NextResponse.json(
-        {
-          status: "completed",
-          slug: completed.slug,
-          campaignId: completed.campaignId,
-          value: completed.value,
-          currency: completed.currency,
-          contentName: completed.contentName,
-          checkoutId: completed.checkoutId,
-        },
-        { headers: { "Cache-Control": "no-store" } },
-      );
+      return NextResponse.json({
+        status: "completed",
+        slug: completed.slug,
+        campaignId: completed.campaignId,
+        value: completed.value,
+        currency: completed.currency,
+        contentName: completed.contentName,
+        checkoutId: completed.checkoutId,
+      });
     }
 
     return NextResponse.json(
-      {
-        status: "fulfilling",
-        checkoutId,
-        contentName: checkout.business_name,
-        value: Number(checkout.total_cost),
-        currency: "TRY",
-      },
+      { status: "fulfilling", checkoutId },
       { headers: { "Cache-Control": "no-store" } },
     );
-  } catch (err) {
-    console.error("Payment status error:", err);
+  } catch (error) {
+    console.error("Start fulfillment error:", error);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Durum alınamadı" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Kampanya oluşturulamadı",
+      },
       { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }

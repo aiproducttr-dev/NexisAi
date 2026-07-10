@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { trackMetaPurchaseOnce } from "@/lib/analytics/meta-pixel";
@@ -11,12 +11,49 @@ export default function CheckoutFulfillmentTracker({
   checkoutId: string;
 }) {
   const router = useRouter();
+  const fulfillmentStarted = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
     let attempts = 0;
     const maxAttempts = 180;
+
+    const startFulfillment = async () => {
+      if (fulfillmentStarted.current) return;
+      fulfillmentStarted.current = true;
+
+      try {
+        const res = await fetch("/api/payments/iyzico/start-fulfillment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkoutId }),
+        });
+
+        if (cancelled) return;
+
+        const data = await res.json();
+        if (res.ok && data.status === "completed" && data.slug) {
+          if (data.value) {
+            trackMetaPurchaseOnce(
+              checkoutId,
+              {
+                value: Number(data.value),
+                currency: data.currency ?? "TRY",
+                checkoutId,
+                contentName: data.contentName,
+              },
+              [data.slug],
+            );
+          }
+
+          router.replace(`/dashboard?created=${data.slug}`);
+        }
+      } catch (error) {
+        console.error("Fulfillment start error:", error);
+        fulfillmentStarted.current = false;
+      }
+    };
 
     const poll = async () => {
       if (cancelled) return;
@@ -30,7 +67,7 @@ export default function CheckoutFulfillmentTracker({
         const data = await res.json();
 
         if (res.ok && data.status === "completed" && data.slug) {
-          if (data.value && checkoutId) {
+          if (data.value) {
             trackMetaPurchaseOnce(
               checkoutId,
               {
@@ -63,6 +100,7 @@ export default function CheckoutFulfillmentTracker({
       }
     };
 
+    void startFulfillment();
     poll();
 
     return () => {
@@ -86,8 +124,8 @@ export default function CheckoutFulfillmentTracker({
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-[#94a3b8]">
             Ödemeniz alındı ve doğrulandı. Kampanyanız oluşturuluyor, içerikler
-            yayınlanıyor… Bu işlem birkaç dakika sürebilir; sayfayı
-            kapatabilirsiniz, tamamlandığında burada görünecektir.
+            yayınlanıyor… Bu işlem birkaç dakika sürebilir; lütfen bu sekmeyi
+            açık bırakın.
           </p>
         </div>
       </div>
