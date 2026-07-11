@@ -54,9 +54,15 @@ export default function HomeLanding() {
       <div className="lf-vignette" aria-hidden />
 
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SupportContact variant="topRight" />
+        {/* Desktop fixed top-right only */}
+        <div className="hidden md:block">
+          <SupportContact variant="topRight" />
+        </div>
         <nav className="lf-animate-in flex flex-col items-center gap-5 py-6 sm:py-8">
           <BrandLogo href="/" size="2xl" priority centered />
+          <div className="w-full md:hidden">
+            <SupportContact />
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href={LOGIN_HREF}

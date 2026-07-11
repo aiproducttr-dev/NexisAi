@@ -76,12 +76,12 @@ export default async function DashboardPage({
           contentName={createdCampaign.business_name}
         />
       )}
-      <SupportContact variant="topRight" belowNav />
       <AppNav
         logoHref="/dashboard"
         userLabel={profile?.full_name || user.email || undefined}
         right={<DashboardActions />}
       />
+      <SupportContact variant="topRight" belowNav className="px-4 pt-3 sm:px-6 lg:px-8" />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {params.checkoutId && !params.created && (

@@ -100,7 +100,6 @@ export default function AuthForm() {
 
   return (
     <>
-      <SupportContact variant="topRight" belowNav />
       <AppNav
         backLink={{ href: "/", label: "Ana Sayfa" }}
         right={
@@ -112,6 +111,7 @@ export default function AuthForm() {
           </Link>
         }
       />
+      <SupportContact variant="topRight" belowNav className="px-4 pt-3" />
 
       <div className="mx-auto flex min-h-[calc(100vh-88px)] max-w-md items-center px-4 py-10 sm:px-6">
         <div className="lf-animate-in lf-animate-in-2 w-full">
