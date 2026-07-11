@@ -1,4 +1,5 @@
 import { resolveRegistrationSource } from "@/lib/auth/registration-source";
+import { getSafeInternalPath } from "@/lib/auth/safe-redirect";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       success: true,
       registrationSource: source,
       userId,
-      redirectTo: "/dashboard",
+      redirectTo: getSafeInternalPath(redirect, "/dashboard"),
     });
   } catch (err) {
     console.error("Register route error:", err);

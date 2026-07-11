@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -10,11 +11,41 @@ export default function DashboardActions() {
   const pathname = usePathname();
   const supabase = createClient();
   const onNewPage = pathname === "/dashboard/new";
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled) setLoggedIn(!!data.user);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase.auth]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
+  }
+
+  if (loggedIn === false) {
+    return (
+      <div className="flex items-center gap-2">
+        <Link
+          href="/auth?redirect=/dashboard"
+          className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[#94a3b8] transition hover:border-cyan-500/30 hover:text-[#e2e8f0]"
+        >
+          Giriş Yap
+        </Link>
+        <Link
+          href="/auth?mode=register&redirect=/dashboard/new"
+          className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-[#e2e8f0] transition hover:border-violet-500"
+        >
+          Kayıt Ol
+        </Link>
+      </div>
+    );
   }
 
   return (

@@ -11,7 +11,7 @@ export default async function NewCampaignPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth?redirect=/dashboard/new");
+  if (!user) redirect("/auth?mode=register&redirect=/dashboard/new");
 
   const { count: totalCampaignCount } = await supabase
     .from("campaigns")

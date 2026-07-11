@@ -76,12 +76,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthPage = pathname.startsWith("/auth");
-  const isDashboard = pathname.startsWith("/dashboard");
+  const isNewCampaign = pathname.startsWith("/dashboard/new");
 
-  if (!user && isDashboard) {
+  // Kampanya oluşturma hesabı gerektirir; dashboard görüntüleme açık
+  if (!user && isNewCampaign) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    url.searchParams.set("mode", "register");
+    url.searchParams.set("redirect", "/dashboard/new");
     return NextResponse.redirect(url);
   }
 
@@ -91,8 +93,7 @@ export async function updateSession(request: NextRequest) {
     const safeRedirect = getSafeInternalPath(rawRedirect, "");
 
     if (safeRedirect) {
-      url.pathname =
-        safeRedirect === "/dashboard/new" ? "/dashboard" : safeRedirect;
+      url.pathname = safeRedirect;
     } else {
       url.pathname = forumSite ? "/forum" : "/dashboard";
     }

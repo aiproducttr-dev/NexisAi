@@ -29,9 +29,7 @@ export default function AuthForm() {
 
   const supabase = createClient();
 
-  const postAuthPath = resolvePostAuthPath(redirectParam, {
-    preferDashboardList: mode === "login",
-  });
+  const postAuthPath = resolvePostAuthPath(redirectParam);
 
   const registrationSource = resolveRegistrationSource({
     redirect: redirectParam,

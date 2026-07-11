@@ -19,7 +19,7 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
-const REGISTER_HREF = "/auth?mode=register&redirect=/dashboard";
+const START_HREF = "/dashboard";
 const LOGIN_HREF = "/auth?redirect=/dashboard";
 
 const STEPS = [
@@ -71,7 +71,7 @@ export default function HomeLanding() {
               Giriş Yap
             </Link>
             <Link
-              href={REGISTER_HREF}
+              href={START_HREF}
               className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-[#e2e8f0] shadow-[0_0_20px_rgba(139,92,246,0.15)] transition hover:border-violet-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.55)] sm:shrink-0"
             >
               Hemen Başlayın →
@@ -100,7 +100,7 @@ export default function HomeLanding() {
 
             <div className="lf-animate-in lf-animate-in-4 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Link
-                href={REGISTER_HREF}
+                href={START_HREF}
                 className="lf-btn-primary relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold text-white transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(139,92,246,0.55),0_0_80px_rgba(6,182,212,0.2)] sm:py-4"
               >
                 <span className="relative z-10">Kampanyanızı Başlatın</span>
@@ -209,7 +209,7 @@ export default function HomeLanding() {
             Güvenli ödeme ile kampanyanızı hemen başlatın.
           </p>
           <Link
-            href={REGISTER_HREF}
+            href={START_HREF}
             className="lf-btn-primary relative mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold text-white transition hover:-translate-y-0.5 sm:py-4"
           >
             <span className="relative z-10">Ücretsiz Kayıt Olun</span>

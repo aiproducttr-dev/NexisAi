@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, TrendingUp, Calendar } from "lucide-react";
 import { formatDailyVisibilityIncrease } from "@/lib/auth/admin";
@@ -11,6 +10,8 @@ import AppNav from "@/components/layout/AppNav";
 import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
 import { fetchLiveCampaignStats } from "@/lib/stats/fetch-live-campaign-stats";
+
+const CREATE_CAMPAIGN_HREF = "/auth?mode=register&redirect=/dashboard/new";
 
 export default async function DashboardPage({
   searchParams,
@@ -24,13 +25,15 @@ export default async function DashboardPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth");
+  const newCampaignHref = user ? "/dashboard/new" : CREATE_CAMPAIGN_HREF;
 
-  const { data: campaigns, error: campaignsError } = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const { data: campaigns, error: campaignsError } = user
+    ? await supabase
+        .from("campaigns")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
 
   if (campaignsError) {
     console.error("Dashboard campaigns fetch error:", campaignsError);
@@ -47,18 +50,20 @@ export default async function DashboardPage({
       }
     | null = null;
 
-  if (params.created) {
+  if (user && params.created) {
     const campaign = campaigns?.find((c) => c.content_slug === params.created);
     if (campaign) {
       createdCampaign = campaign;
     }
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
 
   let liveStats = null;
   try {
@@ -78,13 +83,21 @@ export default async function DashboardPage({
       )}
       <AppNav
         logoHref="/dashboard"
-        userLabel={profile?.full_name || user.email || undefined}
+        userLabel={
+          user
+            ? profile?.full_name || user.email || undefined
+            : undefined
+        }
         right={<DashboardActions />}
       />
-      <SupportContact variant="topRight" belowNav className="px-4 pt-3 sm:px-6 lg:px-8" />
+      <SupportContact
+        variant="topRight"
+        belowNav
+        className="px-4 pt-3 sm:px-6 lg:px-8"
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {params.checkoutId && !params.created && (
+        {user && params.checkoutId && !params.created && (
           <CheckoutFulfillmentTracker checkoutId={params.checkoutId} />
         )}
 
@@ -102,6 +115,13 @@ export default async function DashboardPage({
               </strong>
               . İçerikler arka planda yayınlanmaya devam ediyor.
             </p>
+          </div>
+        )}
+
+        {!user && (
+          <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4 text-sm text-cyan-100">
+            Kampanyalarınızı görmek ve yönetmek için buradasınız. Yeni kampanya
+            oluştururken e-posta ile hızlı kayıt isteyeceğiz.
           </div>
         )}
 
@@ -123,7 +143,7 @@ export default async function DashboardPage({
             />
           </div>
           <Link
-            href="/dashboard/new"
+            href={newCampaignHref}
             className="lf-btn-primary relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3 font-bold text-white transition hover:-translate-y-0.5"
           >
             <Plus className="relative z-10 h-5 w-5" />
@@ -208,15 +228,20 @@ export default async function DashboardPage({
                 Henüz kampanya yok
               </h3>
               <p className="mx-auto mt-2 max-w-sm text-sm text-[#94a3b8]">
-                İlk kampanyanızı oluşturarak işletmenizin dijital görünürlüğünü
-                artırmaya başlayın.
+                {user
+                  ? "İlk kampanyanızı oluşturarak işletmenizin dijital görünürlüğünü artırmaya başlayın."
+                  : "Kampanya oluşturmak için e-posta ile kayıt olun; ardından sihirbazla hemen başlayın."}
               </p>
               <Link
-                href="/dashboard/new"
+                href={newCampaignHref}
                 className="lf-btn-primary relative mt-8 inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3 font-bold text-white transition hover:-translate-y-0.5"
               >
                 <Plus className="relative z-10 h-5 w-5" />
-                <span className="relative z-10">İlk Kampanyanızı Başlatın</span>
+                <span className="relative z-10">
+                  {user
+                    ? "İlk Kampanyanızı Başlatın"
+                    : "Kayıt Ol ve Kampanya Başlat"}
+                </span>
               </Link>
             </div>
           </div>
