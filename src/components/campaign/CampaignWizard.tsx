@@ -20,8 +20,12 @@ import MetricsPreview, {
 } from "@/components/campaign/MetricsPreview";
 import { createClient } from "@/lib/supabase/client";
 import {
+  clearCampaignDraft,
+  loadCampaignDraft,
+  saveCampaignDraft,
+} from "@/lib/campaign/draft";
+import {
   trackMetaInitiateCheckout,
-  trackMetaPurchaseOnce,
 } from "@/lib/analytics/meta-pixel";
 import type { Category } from "@/lib/types";
 import {
@@ -42,7 +46,9 @@ export default function CampaignWizard() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [draftRestored, setDraftRestored] = useState(false);
 
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
@@ -62,6 +68,37 @@ export default function CampaignWizard() {
     loadCategories();
   }, [supabase]);
 
+  useEffect(() => {
+    if (draftRestored) return;
+    const draft = loadCampaignDraft();
+    if (!draft) {
+      setDraftRestored(true);
+      return;
+    }
+
+    setBusinessName(draft.businessName);
+    setCategory(draft.category);
+    setProductDescription(draft.productDescription || "");
+    setCity(draft.city);
+    setDailyBudget(draft.dailyBudget || BUDGET_MIN);
+    setDays(draft.days || DAYS_MIN);
+    setStep(draft.step || 3);
+
+    void supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setInfo(
+          "Hesabınız hazır. Kampanya bilgileriniz yüklendi — ödemeye devam edebilirsiniz.",
+        );
+      } else {
+        setInfo(
+          "Bilgileriniz kaydedildi. Ödeme için kayıt olun veya giriş yapın, ardından devam edin.",
+        );
+      }
+    });
+
+    setDraftRestored(true);
+  }, [draftRestored, supabase.auth]);
+
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
 
   const isManufacturer = isManufacturerCategory(category);
@@ -72,11 +109,37 @@ export default function CampaignWizard() {
     (!isManufacturer || productDescription.trim().length >= 3);
   const canProceedStep2 = dailyBudget >= BUDGET_MIN && days >= DAYS_MIN;
 
+  function persistDraft(nextStep: Step = step) {
+    saveCampaignDraft({
+      businessName: businessName.trim(),
+      category,
+      productDescription: isManufacturer ? productDescription.trim() : "",
+      city,
+      dailyBudget,
+      days,
+      step: nextStep,
+      updatedAt: Date.now(),
+    });
+  }
+
   async function handleStartCampaign() {
     setLoading(true);
     setError("");
+    setInfo("");
 
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        persistDraft(3);
+        window.location.assign(
+          "/auth?mode=register&redirect=/dashboard/new",
+        );
+        return;
+      }
+
       const res = await fetch("/api/payments/iyzico/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,6 +160,8 @@ export default function CampaignWizard() {
       if (!res.ok) {
         throw new Error(data.error || "Ödeme başlatılamadı");
       }
+
+      clearCampaignDraft();
 
       if (data.bypass && data.redirectUrl) {
         window.location.href = data.redirectUrl;
@@ -119,7 +184,9 @@ export default function CampaignWizard() {
 
       window.location.href = data.paymentPageUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      setError(
+        err instanceof Error ? err.message : "Kampanya başlatılamadı",
+      );
       setLoading(false);
     }
   }
@@ -159,6 +226,12 @@ export default function CampaignWizard() {
       {error && (
         <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
           {error}
+        </div>
+      )}
+
+      {info && (
+        <div className="mb-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
+          {info}
         </div>
       )}
 
@@ -350,9 +423,9 @@ export default function CampaignWizard() {
           </div>
 
           <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-100/90">
-            Ödeme iyzico güvenli ödeme altyapısı ile alınır. Onay sonrası
-            kampanyanız otomatik başlatılır ve içerikler tüm kanallara
-            yayınlanır.
+            Ödeme iyzico güvenli ödeme altyapısı ile alınır. Henüz üye
+            değilseniz bu adımda e-posta ile hızlı kayıt isteyeceğiz; ardından
+            ödemeye geçilir. Onay sonrası kampanyanız otomatik başlatılır.
           </div>
 
           <div className="flex gap-3">

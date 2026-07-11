@@ -39,10 +39,10 @@ export default function DashboardActions() {
           Giriş Yap
         </Link>
         <Link
-          href="/auth?mode=register&redirect=/dashboard/new"
+          href="/dashboard/new"
           className="inline-flex items-center rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-[#e2e8f0] transition hover:border-violet-500"
         >
-          Kayıt Ol
+          Kampanya Başlat
         </Link>
       </div>
     );

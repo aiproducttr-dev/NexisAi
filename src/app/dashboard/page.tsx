@@ -11,8 +11,6 @@ import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
 import { fetchLiveCampaignStats } from "@/lib/stats/fetch-live-campaign-stats";
 
-const CREATE_CAMPAIGN_HREF = "/auth?mode=register&redirect=/dashboard/new";
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -25,7 +23,7 @@ export default async function DashboardPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const newCampaignHref = user ? "/dashboard/new" : CREATE_CAMPAIGN_HREF;
+  const newCampaignHref = "/dashboard/new";
 
   const { data: campaigns, error: campaignsError } = user
     ? await supabase
@@ -120,8 +118,9 @@ export default async function DashboardPage({
 
         {!user && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4 text-sm text-cyan-100">
-            Kampanyalarınızı görmek ve yönetmek için buradasınız. Yeni kampanya
-            oluştururken e-posta ile hızlı kayıt isteyeceğiz.
+            Kampanyalarınızı görmek ve yönetmek için buradasınız. Kampanya
+            bilgilerini üyeliksiz doldurabilirsiniz; ödeme adımında kayıt
+            isteyeceğiz.
           </div>
         )}
 
@@ -228,20 +227,16 @@ export default async function DashboardPage({
                 Henüz kampanya yok
               </h3>
               <p className="mx-auto mt-2 max-w-sm text-sm text-[#94a3b8]">
-                {user
-                  ? "İlk kampanyanızı oluşturarak işletmenizin dijital görünürlüğünü artırmaya başlayın."
-                  : "Kampanya oluşturmak için e-posta ile kayıt olun; ardından sihirbazla hemen başlayın."}
+                İlk kampanyanızı oluşturarak işletmenizin dijital görünürlüğünü
+                artırmaya başlayın. Bilgileri şimdi doldurun; üyelik ödeme
+                anında istenir.
               </p>
               <Link
                 href={newCampaignHref}
                 className="lf-btn-primary relative mt-8 inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3 font-bold text-white transition hover:-translate-y-0.5"
               >
                 <Plus className="relative z-10 h-5 w-5" />
-                <span className="relative z-10">
-                  {user
-                    ? "İlk Kampanyanızı Başlatın"
-                    : "Kayıt Ol ve Kampanya Başlat"}
-                </span>
+                <span className="relative z-10">İlk Kampanyanızı Başlatın</span>
               </Link>
             </div>
           </div>

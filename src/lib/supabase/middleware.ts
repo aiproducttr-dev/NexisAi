@@ -76,16 +76,6 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthPage = pathname.startsWith("/auth");
-  const isNewCampaign = pathname.startsWith("/dashboard/new");
-
-  // Kampanya oluşturma hesabı gerektirir; dashboard görüntüleme açık
-  if (!user && isNewCampaign) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth";
-    url.searchParams.set("mode", "register");
-    url.searchParams.set("redirect", "/dashboard/new");
-    return NextResponse.redirect(url);
-  }
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();

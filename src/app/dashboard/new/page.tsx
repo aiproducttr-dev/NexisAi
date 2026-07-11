@@ -2,7 +2,6 @@ import CampaignWizard from "@/components/campaign/CampaignWizard";
 import AppNav from "@/components/layout/AppNav";
 import DashboardActions from "@/components/dashboard/DashboardActions";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function NewCampaignPage() {
@@ -11,19 +10,21 @@ export default async function NewCampaignPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth?mode=register&redirect=/dashboard/new");
+  const { count: totalCampaignCount } = user
+    ? await supabase
+        .from("campaigns")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+    : { count: 0 };
 
-  const { count: totalCampaignCount } = await supabase
-    .from("campaigns")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { data: existingCampaigns } = await supabase
-    .from("campaigns")
-    .select("id, business_name, content_slug, status, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const { data: existingCampaigns } = user
+    ? await supabase
+        .from("campaigns")
+        .select("id, business_name, content_slug, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+    : { data: [] };
 
   const campaignCount = totalCampaignCount ?? 0;
 
@@ -36,7 +37,14 @@ export default async function NewCampaignPage() {
       />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {campaignCount > 0 && (
+        {!user && (
+          <div className="lf-animate-in lf-animate-in-1 mb-6 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4 text-sm text-cyan-100">
+            Kampanya bilgilerinizi üyeliksiz doldurabilirsiniz. Ödeme adımında
+            e-posta ile hızlı kayıt isteyeceğiz.
+          </div>
+        )}
+
+        {user && campaignCount > 0 && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-cyan-100">
