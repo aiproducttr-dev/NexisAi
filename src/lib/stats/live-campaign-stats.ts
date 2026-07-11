@@ -5,19 +5,40 @@ export const ACTIVE_CAMPAIGNS_BASE = 1320;
 export const ACTIVE_CAMPAIGNS_EPOCH_MS = Date.UTC(2026, 6, 11, 6, 0, 0);
 export const ACTIVE_CAMPAIGNS_SLOT_MS = 10 * 60 * 1000;
 
-export interface CategoryLeader {
+export interface CampaignLeader {
   rank: number;
+  city: string;
   category: string;
-  campaignCount: number;
+  businessName: string;
 }
 
 export interface LiveCampaignStats {
   activeCampaigns: number;
   nextIncrementAt: number;
-  leaders: CategoryLeader[];
-  leadersHourKey: string;
-  leadersNextChangeAt: number;
+  leaders: CampaignLeader[];
 }
+
+/** Featured campaign leaders shown to all visitors. */
+export const CAMPAIGN_LEADERS: CampaignLeader[] = [
+  {
+    rank: 1,
+    city: "Kahramanmaraş",
+    category: "Üretici Firma",
+    businessName: "Arte Bağlantı Elemanları",
+  },
+  {
+    rank: 2,
+    city: "Kahramanmaraş",
+    category: "Güvenlik filesi",
+    businessName: "Fileci İsmail",
+  },
+  {
+    rank: 3,
+    city: "Kayseri",
+    category: "Üretici Firma",
+    businessName: "EMS Demir Profil",
+  },
+];
 
 function slotIncrement(slot: number): number {
   // Deterministic 4–10 for each 10-minute slot
@@ -49,56 +70,10 @@ export function getNextActiveCampaignIncrementAt(nowMs = Date.now()): number {
   return ACTIVE_CAMPAIGNS_EPOCH_MS + (slots + 1) * ACTIVE_CAMPAIGNS_SLOT_MS;
 }
 
-export function getHourBucketKey(nowMs = Date.now()): string {
-  const d = new Date(nowMs);
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  const h = String(d.getUTCHours()).padStart(2, "0");
-  return `${y}-${m}-${day}T${h}`;
-}
-
-export function getNextHourChangeAt(nowMs = Date.now()): number {
-  const d = new Date(nowMs);
-  d.setUTCMinutes(0, 0, 0);
-  d.setUTCHours(d.getUTCHours() + 1);
-  return d.getTime();
-}
-
-function hourHash(category: string, hourKey: string): number {
-  const input = `${hourKey}:${category}`;
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-/**
- * Rank categories by real campaign count; ties / empty slots use a
- * deterministic hourly seed so 2nd/3rd (and full list when sparse) rotate hourly.
- */
-export function rankCategoryLeaders(
-  categoryNames: string[],
-  countsByCategory: Record<string, number>,
-  hourKey: string,
-  limit = 3,
-): CategoryLeader[] {
-  const unique = [...new Set(categoryNames.filter(Boolean))];
-
-  const ranked = unique
-    .map((category) => {
-      const campaignCount = countsByCategory[category] ?? 0;
-      const score = campaignCount * 1_000_000 + hourHash(category, hourKey);
-      return { category, campaignCount, score };
-    })
-    .sort((a, b) => b.score - a.score || a.category.localeCompare(b.category, "tr"))
-    .slice(0, limit);
-
-  return ranked.map((item, index) => ({
-    rank: index + 1,
-    category: item.category,
-    campaignCount: item.campaignCount,
-  }));
+export function getLiveCampaignStats(nowMs = Date.now()): LiveCampaignStats {
+  return {
+    activeCampaigns: getActiveCampaignCount(nowMs),
+    nextIncrementAt: getNextActiveCampaignIncrementAt(nowMs),
+    leaders: CAMPAIGN_LEADERS,
+  };
 }

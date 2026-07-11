@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import {
+  CAMPAIGN_LEADERS,
   getActiveCampaignCount,
   getNextActiveCampaignIncrementAt,
-  type CategoryLeader,
+  type CampaignLeader,
   type LiveCampaignStats,
 } from "@/lib/stats/live-campaign-stats";
 import { Trophy } from "lucide-react";
@@ -23,48 +24,13 @@ export default function LiveCampaignStatsCard({
   const [activeCampaigns, setActiveCampaigns] = useState(
     initialStats?.activeCampaigns ?? getActiveCampaignCount(),
   );
-  const [leaders, setLeaders] = useState<CategoryLeader[]>(
-    initialStats?.leaders ?? [],
+  const [leaders] = useState<CampaignLeader[]>(
+    initialStats?.leaders?.length ? initialStats.leaders : CAMPAIGN_LEADERS,
   );
-  const [nextIncrementAt, setNextIncrementAt] = useState(
-    initialStats?.nextIncrementAt ?? getNextActiveCampaignIncrementAt(),
-  );
-  const [leadersNextChangeAt, setLeadersNextChangeAt] = useState(
-    initialStats?.leadersNextChangeAt ?? Date.now() + 60_000,
-  );
-  const [loaded, setLoaded] = useState(Boolean(initialStats?.leaders.length));
 
   useEffect(() => {
     if (!initialStats) return;
     setActiveCampaigns(initialStats.activeCampaigns);
-    setLeaders(initialStats.leaders);
-    setNextIncrementAt(initialStats.nextIncrementAt);
-    setLeadersNextChangeAt(initialStats.leadersNextChangeAt);
-    setLoaded(true);
-  }, [initialStats]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const res = await fetch("/api/stats/live", { cache: "no-store" });
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as LiveCampaignStats;
-        if (cancelled) return;
-        setActiveCampaigns(data.activeCampaigns);
-        setLeaders(data.leaders);
-        setNextIncrementAt(data.nextIncrementAt);
-        setLeadersNextChangeAt(data.leadersNextChangeAt);
-        setLoaded(true);
-      } catch {
-        if (!cancelled) setLoaded(true);
-      }
-    };
-
-    if (!initialStats) {
-      void load();
-    }
   }, [initialStats]);
 
   useEffect(() => {
@@ -75,7 +41,6 @@ export default function LiveCampaignStatsCard({
       if (cancelled) return;
       const now = Date.now();
       setActiveCampaigns(getActiveCampaignCount(now));
-      setNextIncrementAt(getNextActiveCampaignIncrementAt(now));
       const delay = Math.max(
         1000,
         getNextActiveCampaignIncrementAt(now) - now + 50,
@@ -90,45 +55,6 @@ export default function LiveCampaignStatsCard({
       if (timer) clearTimeout(timer);
     };
   }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const refreshLeaders = async () => {
-      if (cancelled) return;
-      try {
-        const res = await fetch("/api/stats/live", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as LiveCampaignStats;
-        if (cancelled) return;
-        setLeaders(data.leaders);
-        setLeadersNextChangeAt(data.leadersNextChangeAt);
-        setActiveCampaigns(data.activeCampaigns);
-        setNextIncrementAt(data.nextIncrementAt);
-      } catch {
-        // keep current
-      }
-    };
-
-    const schedule = () => {
-      if (cancelled) return;
-      const delay = Math.max(5000, leadersNextChangeAt - Date.now() + 200);
-      timer = setTimeout(async () => {
-        await refreshLeaders();
-        schedule();
-      }, delay);
-    };
-
-    schedule();
-
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, [leadersNextChangeAt, loaded]);
 
   return (
     <div
@@ -157,28 +83,49 @@ export default function LiveCampaignStatsCard({
         <div className="mb-2 flex items-center gap-1.5">
           <Trophy className="h-3.5 w-3.5 text-amber-400" />
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400">
-            Kampanya Lideri Kategorileri
+            Kampanya Liderleri
           </p>
         </div>
-        {leaders.length > 0 ? (
-          <ol className="space-y-1.5">
-            {leaders.map((leader) => (
-              <li
-                key={`${leader.rank}-${leader.category}`}
-                className="flex items-center gap-2 text-sm"
-              >
-                <span className="lf-orbitron w-6 shrink-0 text-xs font-bold text-[#64748b]">
-                  {leader.rank}.
+        <div className="mb-2 grid grid-cols-[1.4rem_1fr] gap-x-2 text-[10px] font-semibold uppercase tracking-wide text-[#64748b]">
+          <span />
+          <span className="grid grid-cols-3 gap-1">
+            <span>Şehir</span>
+            <span>Kategori</span>
+            <span>İşletme</span>
+          </span>
+        </div>
+        <ol className="space-y-2">
+          {leaders.map((leader) => (
+            <li
+              key={`${leader.rank}-${leader.businessName}`}
+              className="grid grid-cols-[1.4rem_1fr] items-start gap-x-2 text-sm"
+            >
+              <span className="lf-orbitron pt-0.5 text-xs font-bold text-amber-400">
+                {leader.rank}.
+              </span>
+              <span className="grid min-w-0 grid-cols-1 gap-0.5 sm:grid-cols-3 sm:gap-1">
+                <span className="truncate font-medium text-[#e2e8f0]">
+                  <span className="mr-1 text-[10px] text-[#64748b] sm:hidden">
+                    Şehir:
+                  </span>
+                  {leader.city}
                 </span>
-                <span className="min-w-0 truncate font-medium text-[#e2e8f0]">
+                <span className="truncate text-[#94a3b8]">
+                  <span className="mr-1 text-[10px] text-[#64748b] sm:hidden">
+                    Kategori:
+                  </span>
                   {leader.category}
                 </span>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="text-xs text-[#64748b]">Yükleniyor…</p>
-        )}
+                <span className="truncate font-semibold text-white">
+                  <span className="mr-1 text-[10px] text-[#64748b] sm:hidden">
+                    İşletme:
+                  </span>
+                  {leader.businessName}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   );
