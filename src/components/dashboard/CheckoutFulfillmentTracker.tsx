@@ -12,12 +12,35 @@ export default function CheckoutFulfillmentTracker({
 }) {
   const router = useRouter();
   const fulfillmentStarted = useRef(false);
+  const purchaseTracked = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
     let attempts = 0;
     const maxAttempts = 180;
+
+    const trackPaidPurchase = (data: {
+      value?: number;
+      currency?: string;
+      contentName?: string;
+      slug?: string;
+    }) => {
+      if (purchaseTracked.current) return;
+      if (!data.value || Number(data.value) <= 0) return;
+
+      purchaseTracked.current = true;
+      trackMetaPurchaseOnce(
+        checkoutId,
+        {
+          value: Number(data.value),
+          currency: data.currency ?? "TRY",
+          checkoutId,
+          contentName: data.contentName,
+        },
+        data.slug ? [data.slug] : [],
+      );
+    };
 
     const startFulfillment = async () => {
       if (fulfillmentStarted.current) return;
@@ -33,20 +56,12 @@ export default function CheckoutFulfillmentTracker({
         if (cancelled) return;
 
         const data = await res.json();
-        if (res.ok && data.status === "completed" && data.slug) {
-          if (data.value) {
-            trackMetaPurchaseOnce(
-              checkoutId,
-              {
-                value: Number(data.value),
-                currency: data.currency ?? "TRY",
-                checkoutId,
-                contentName: data.contentName,
-              },
-              [data.slug],
-            );
-          }
 
+        if (res.ok && (data.status === "completed" || data.status === "fulfilling")) {
+          trackPaidPurchase(data);
+        }
+
+        if (res.ok && data.status === "completed" && data.slug) {
           router.replace(`/dashboard?created=${data.slug}`);
         }
       } catch (error) {
@@ -66,20 +81,14 @@ export default function CheckoutFulfillmentTracker({
         );
         const data = await res.json();
 
-        if (res.ok && data.status === "completed" && data.slug) {
-          if (data.value) {
-            trackMetaPurchaseOnce(
-              checkoutId,
-              {
-                value: Number(data.value),
-                currency: data.currency ?? "TRY",
-                checkoutId,
-                contentName: data.contentName,
-              },
-              [data.slug],
-            );
-          }
+        if (
+          res.ok &&
+          (data.status === "completed" || data.status === "fulfilling")
+        ) {
+          trackPaidPurchase(data);
+        }
 
+        if (res.ok && data.status === "completed" && data.slug) {
           router.replace(`/dashboard?created=${data.slug}`);
           return;
         }

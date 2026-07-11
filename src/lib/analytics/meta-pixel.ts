@@ -12,16 +12,17 @@ function getFbq(): FbqFn | null {
   return typeof fbq === "function" ? fbq : null;
 }
 
-function trackEvent(eventName: string, params?: Record<string, unknown>) {
+function trackEvent(eventName: string, params?: Record<string, unknown>): boolean {
   const fbq = getFbq();
-  if (!fbq) return;
+  if (!fbq) return false;
 
   if (params) {
     fbq("track", eventName, params);
-    return;
+  } else {
+    fbq("track", eventName);
   }
 
-  fbq("track", eventName);
+  return true;
 }
 
 export interface MetaPurchaseParams {
@@ -70,9 +71,11 @@ export function trackMetaInitiateCheckout(params: {
   });
 }
 
-/** Meta standard: ödeme tamamlandı */
-export function trackMetaPurchase(params: MetaPurchaseParams) {
-  trackEvent("Purchase", {
+/** Meta standard: ödeme tamamlandı (Purchase) */
+export function trackMetaPurchase(params: MetaPurchaseParams): boolean {
+  if (!Number.isFinite(params.value) || params.value <= 0) return false;
+
+  return trackEvent("Purchase", {
     value: params.value,
     currency: params.currency ?? "TRY",
     content_type: "product",
@@ -82,17 +85,32 @@ export function trackMetaPurchase(params: MetaPurchaseParams) {
   });
 }
 
+/**
+ * Fires Purchase once per checkout. Retries briefly if Pixel is not ready yet.
+ * Only marks dedupe keys after a successful fbq call.
+ */
 export function trackMetaPurchaseOnce(
   dedupeKey: string,
   params: MetaPurchaseParams,
   extraDedupeKeys: string[] = [],
 ) {
-  const keys = [dedupeKey, ...extraDedupeKeys];
+  const keys = [dedupeKey, ...extraDedupeKeys].filter(Boolean);
   if (keys.some((key) => isMetaPurchaseTracked(key))) return;
 
-  trackMetaPurchase(params);
+  const attempt = (triesLeft: number) => {
+    if (keys.some((key) => isMetaPurchaseTracked(key))) return;
 
-  for (const key of keys) {
-    markMetaPurchaseTracked(key);
-  }
+    const sent = trackMetaPurchase(params);
+    if (sent) {
+      for (const key of keys) {
+        markMetaPurchaseTracked(key);
+      }
+      return;
+    }
+
+    if (triesLeft <= 0) return;
+    window.setTimeout(() => attempt(triesLeft - 1), 400);
+  };
+
+  attempt(8);
 }

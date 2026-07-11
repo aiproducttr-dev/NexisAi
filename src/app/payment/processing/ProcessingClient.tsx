@@ -20,6 +20,29 @@ export default function PaymentProcessingPage() {
     const maxAttempts = 60;
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let purchaseTracked = false;
+
+    const trackPaidPurchase = (data: {
+      value?: number;
+      currency?: string;
+      contentName?: string;
+      slug?: string;
+    }) => {
+      if (purchaseTracked) return;
+      if (!data.value || Number(data.value) <= 0) return;
+
+      purchaseTracked = true;
+      trackMetaPurchaseOnce(
+        checkoutId,
+        {
+          value: Number(data.value),
+          currency: data.currency ?? "TRY",
+          checkoutId,
+          contentName: data.contentName,
+        },
+        data.slug ? [data.slug] : [],
+      );
+    };
 
     const goToDashboard = (data: {
       status: string;
@@ -28,19 +51,10 @@ export default function PaymentProcessingPage() {
       currency?: string;
       contentName?: string;
     }) => {
+      // Ödeme doğrulandı → Purchase (ödeme tamamlandı)
+      trackPaidPurchase(data);
+
       if (data.status === "completed" && data.slug) {
-        if (data.value) {
-          trackMetaPurchaseOnce(
-            checkoutId,
-            {
-              value: Number(data.value),
-              currency: data.currency ?? "TRY",
-              checkoutId,
-              contentName: data.contentName,
-            },
-            [data.slug],
-          );
-        }
         router.replace(`/dashboard?created=${data.slug}`);
         return;
       }
@@ -59,7 +73,10 @@ export default function PaymentProcessingPage() {
         );
         const data = await res.json();
 
-        if (res.ok && (data.status === "completed" || data.status === "fulfilling")) {
+        if (
+          res.ok &&
+          (data.status === "completed" || data.status === "fulfilling")
+        ) {
           goToDashboard(data);
           return;
         }
