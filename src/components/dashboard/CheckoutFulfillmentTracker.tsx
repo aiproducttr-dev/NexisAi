@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { trackMetaPurchaseOnce } from "@/lib/analytics/meta-pixel";
+import { clearCampaignDraft } from "@/lib/campaign/draft";
 
 export default function CheckoutFulfillmentTracker({
   checkoutId,
@@ -26,6 +27,7 @@ export default function CheckoutFulfillmentTracker({
       contentName?: string;
       slug?: string;
     }) => {
+      clearCampaignDraft();
       if (purchaseTracked.current) return;
       if (!data.value || Number(data.value) <= 0) return;
 

@@ -5,6 +5,7 @@ import {
   getForumBaseUrl,
   isAppHost,
   isForumHost,
+  shouldCanonicalizeAppHost,
 } from "@/lib/constants/urls";
 import { getSafeInternalPath } from "@/lib/auth/safe-redirect";
 import { isIndexNowKeyPath } from "@/lib/indexnow/config";
@@ -32,6 +33,14 @@ export async function updateSession(request: NextRequest) {
   const appSite = isAppHost(host);
   const pathname = request.nextUrl.pathname;
   const search = request.nextUrl.search;
+
+  // www / unicode → punycode apex (tek origin = tek cookie jar)
+  if (shouldCanonicalizeAppHost(host)) {
+    return NextResponse.redirect(
+      `${getAppBaseUrl()}${pathname}${search}`,
+      308,
+    );
+  }
 
   // Ana site domaininde forum yolu açılırsa forum domainine yönlendir
   if (appSite && pathname.startsWith("/forum")) {

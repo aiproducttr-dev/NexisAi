@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { resolveRegistrationSource } from "@/lib/auth/registration-source";
-import { resolvePostAuthPath } from "@/lib/auth/safe-redirect";
+import {
+  getSafeInternalPath,
+  resolvePostAuthPath,
+} from "@/lib/auth/safe-redirect";
 import { createClient } from "@/lib/supabase/client";
 import {
   trackMetaCompleteRegistration,
@@ -30,6 +33,10 @@ export default function AuthForm() {
   const supabase = createClient();
 
   const postAuthPath = resolvePostAuthPath(redirectParam);
+  // Keep funnel users inside the app — never dump them on marketing "/" mid-auth.
+  const escapeHref = getSafeInternalPath(redirectParam, "/dashboard");
+  const escapeLabel =
+    escapeHref === "/dashboard/new" ? "Kampanyaya Dön" : "Panele Dön";
 
   const registrationSource = resolveRegistrationSource({
     redirect: redirectParam,
@@ -120,13 +127,14 @@ export default function AuthForm() {
   return (
     <>
       <AppNav
-        backLink={{ href: "/", label: "Ana Sayfa" }}
+        logoHref={escapeHref}
+        backLink={{ href: escapeHref, label: escapeLabel }}
         right={
           <Link
-            href="/"
+            href={escapeHref}
             className="text-sm text-[#94a3b8] transition hover:text-cyan-400"
           >
-            Tanıtım
+            {escapeLabel}
           </Link>
         }
       />

@@ -20,7 +20,6 @@ import MetricsPreview, {
 } from "@/components/campaign/MetricsPreview";
 import { createClient } from "@/lib/supabase/client";
 import {
-  clearCampaignDraft,
   loadCampaignDraft,
   saveCampaignDraft,
 } from "@/lib/campaign/draft";
@@ -47,6 +46,7 @@ export default function CampaignWizard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
 
@@ -102,16 +102,13 @@ export default function CampaignWizard() {
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
 
   const isManufacturer = isManufacturerCategory(category);
-  const canProceedStep1 =
-    businessName.trim().length >= 2 &&
-    category &&
-    city &&
-    (!isManufacturer || productDescription.trim().length >= 3);
-  const canProceedStep2 = dailyBudget >= BUDGET_MIN && days >= DAYS_MIN;
 
   function persistDraft(nextStep: Step = step) {
+    const name = businessName.trim();
+    if (!name && !category && !city) return;
+
     saveCampaignDraft({
-      businessName: businessName.trim(),
+      businessName: name,
       category,
       productDescription: isManufacturer ? productDescription.trim() : "",
       city,
@@ -122,10 +119,84 @@ export default function CampaignWizard() {
     });
   }
 
+  // Keep draft warm across auth / back navigation (never clear until paid).
+  useEffect(() => {
+    if (!draftRestored) return;
+    persistDraft(step);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- persist latest field snapshot
+  }, [
+    draftRestored,
+    businessName,
+    category,
+    productDescription,
+    city,
+    dailyBudget,
+    days,
+    step,
+  ]);
+
+  function getStep1Errors(): string[] {
+    const errors: string[] = [];
+    if (businessName.trim().length < 2) {
+      errors.push("İşletme adı en az 2 karakter olmalıdır.");
+    }
+    if (!category) {
+      errors.push("Lütfen bir kategori seçin.");
+    }
+    if (!city) {
+      errors.push("Lütfen bir şehir seçin.");
+    }
+    if (
+      isManufacturerCategory(category) &&
+      productDescription.trim().length < 3
+    ) {
+      errors.push(
+        "Üretici firma için ne ürettiğinizi en az 3 karakter ile yazın.",
+      );
+    }
+    return errors;
+  }
+
+  function getStep2Errors(): string[] {
+    const errors: string[] = [];
+    if (dailyBudget < BUDGET_MIN) {
+      errors.push(`Günlük bütçe en az ${BUDGET_MIN} TL olmalıdır.`);
+    }
+    if (days < DAYS_MIN) {
+      errors.push(`Kampanya süresi en az ${DAYS_MIN} gün olmalıdır.`);
+    }
+    return errors;
+  }
+
+  function goToStep2() {
+    const errors = getStep1Errors();
+    if (errors.length) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors([]);
+    setError("");
+    persistDraft(2);
+    setStep(2);
+  }
+
+  function goToStep3() {
+    const errors = getStep2Errors();
+    if (errors.length) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors([]);
+    setError("");
+    persistDraft(3);
+    setStep(3);
+  }
+
   async function handleStartCampaign() {
     setLoading(true);
     setError("");
     setInfo("");
+    setFieldErrors([]);
 
     try {
       const {
@@ -134,11 +205,14 @@ export default function CampaignWizard() {
 
       if (!user) {
         persistDraft(3);
+        setLoading(false);
         window.location.assign(
           "/auth?mode=register&redirect=/dashboard/new",
         );
         return;
       }
+
+      persistDraft(3);
 
       const res = await fetch("/api/payments/iyzico/initialize", {
         method: "POST",
@@ -161,7 +235,7 @@ export default function CampaignWizard() {
         throw new Error(data.error || "Ödeme başlatılamadı");
       }
 
-      clearCampaignDraft();
+      // Draft stays until payment/campaign success (Cancel / back keeps form).
 
       if (data.bypass && data.redirectUrl) {
         window.location.href = data.redirectUrl;
@@ -229,6 +303,22 @@ export default function CampaignWizard() {
         </div>
       )}
 
+      {fieldErrors.length > 0 && (
+        <div
+          role="alert"
+          className="mb-6 rounded-xl border border-red-500/35 bg-red-500/10 p-4 text-sm text-red-200 shadow-[0_0_24px_rgba(239,68,68,0.12)]"
+        >
+          <p className="font-semibold text-red-300">
+            Devam etmek için şu alanları tamamlayın:
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {fieldErrors.map((msg) => (
+              <li key={msg}>{msg}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {info && (
         <div className="mb-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
           {info}
@@ -249,7 +339,10 @@ export default function CampaignWizard() {
             <input
               type="text"
               value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
+              onChange={(e) => {
+                setBusinessName(e.target.value);
+                if (fieldErrors.length) setFieldErrors([]);
+              }}
               placeholder="Örn: Lezzet Durağı"
               className="lf-input"
             />
@@ -268,6 +361,7 @@ export default function CampaignWizard() {
                 if (next !== MANUFACTURER_CATEGORY) {
                   setProductDescription("");
                 }
+                if (fieldErrors.length) setFieldErrors([]);
               }}
               className="lf-select"
             >
@@ -288,14 +382,22 @@ export default function CampaignWizard() {
               </label>
               <textarea
                 value={productDescription}
-                onChange={(e) => setProductDescription(e.target.value)}
+                onChange={(e) => {
+                  setProductDescription(e.target.value);
+                  if (fieldErrors.length) setFieldErrors([]);
+                }}
                 placeholder="Örn: plastik enjeksiyon parçaları, tekstil kumaşı, mobilya aksesuarı..."
                 rows={3}
                 maxLength={300}
-                className="lf-input resize-y"
+                className={`lf-input resize-y ${
+                  fieldErrors.some((e) => e.includes("Üretici"))
+                    ? "border-red-500/50 focus:border-red-400"
+                    : ""
+                }`}
               />
               <p className="mt-1.5 text-xs text-[#64748b]">
-                İçerikler ve forum soruları bu bilgiye göre özelleştirilir.
+                İçerikler ve forum soruları bu bilgiye göre özelleştirilir. En
+                az 3 karakter gerekli.
               </p>
             </div>
           )}
@@ -307,7 +409,10 @@ export default function CampaignWizard() {
             </label>
             <select
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => {
+                setCity(e.target.value);
+                if (fieldErrors.length) setFieldErrors([]);
+              }}
               className="lf-select"
             >
               <option value="">Şehir seçin</option>
@@ -321,9 +426,8 @@ export default function CampaignWizard() {
 
           <button
             type="button"
-            onClick={() => setStep(2)}
-            disabled={!canProceedStep1}
-            className="lf-btn-primary relative flex w-full min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl py-3 font-bold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={goToStep2}
+            className="lf-btn-primary relative flex w-full min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl py-3 font-bold text-white transition hover:-translate-y-0.5"
           >
             <span className="relative z-10">Devam Et</span>
             <ArrowRight className="relative z-10 h-4 w-4" />
@@ -337,13 +441,29 @@ export default function CampaignWizard() {
             <h2 className="lf-orbitron text-xl font-bold text-white sm:text-2xl">
               Bütçe & Süre
             </h2>
-            <BudgetSlider value={dailyBudget} onChange={setDailyBudget} />
-            <DaysSlider value={days} onChange={setDays} />
+            <BudgetSlider
+              value={dailyBudget}
+              onChange={(v) => {
+                setDailyBudget(v);
+                if (fieldErrors.length) setFieldErrors([]);
+              }}
+            />
+            <DaysSlider
+              value={days}
+              onChange={(v) => {
+                setDays(v);
+                if (fieldErrors.length) setFieldErrors([]);
+              }}
+            />
 
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setStep(1)}
+                onClick={() => {
+                  setFieldErrors([]);
+                  persistDraft(1);
+                  setStep(1);
+                }}
                 className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3 text-[#94a3b8] transition hover:border-cyan-500/30 hover:text-[#e2e8f0]"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -351,9 +471,8 @@ export default function CampaignWizard() {
               </button>
               <button
                 type="button"
-                onClick={() => setStep(3)}
-                disabled={!canProceedStep2}
-                className="lf-btn-primary relative flex flex-1 min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl py-3 font-bold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={goToStep3}
+                className="lf-btn-primary relative flex flex-1 min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl py-3 font-bold text-white transition hover:-translate-y-0.5"
               >
                 <span className="relative z-10">Devam Et</span>
                 <ArrowRight className="relative z-10 h-4 w-4" />
@@ -431,7 +550,11 @@ export default function CampaignWizard() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                setFieldErrors([]);
+                persistDraft(2);
+                setStep(2);
+              }}
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3 text-[#94a3b8] transition hover:border-cyan-500/30 hover:text-[#e2e8f0]"
             >
               <ArrowLeft className="h-4 w-4" />

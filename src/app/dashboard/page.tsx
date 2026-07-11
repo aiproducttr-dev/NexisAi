@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/constants/metrics";
 import DashboardActions from "@/components/dashboard/DashboardActions";
 import CheckoutFulfillmentTracker from "@/components/dashboard/CheckoutFulfillmentTracker";
 import MetaPurchaseTracker from "@/components/analytics/MetaPurchaseTracker";
+import ClearCampaignDraftOnSuccess from "@/components/campaign/ClearCampaignDraftOnSuccess";
 import AppNav from "@/components/layout/AppNav";
 import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
@@ -79,6 +80,9 @@ export default async function DashboardPage({
           contentName={createdCampaign.business_name}
         />
       )}
+      <ClearCampaignDraftOnSuccess
+        active={Boolean(createdCampaign?.content_slug)}
+      />
       <AppNav
         logoHref="/dashboard"
         userLabel={

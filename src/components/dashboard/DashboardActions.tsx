@@ -30,10 +30,11 @@ export default function DashboardActions() {
   }
 
   if (loggedIn === false) {
+    const authRedirect = onNewPage ? "/dashboard/new" : "/dashboard";
     return (
       <div className="flex items-center gap-2">
         <Link
-          href="/auth?redirect=/dashboard"
+          href={`/auth?mode=login&redirect=${encodeURIComponent(authRedirect)}`}
           className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[#94a3b8] transition hover:border-cyan-500/30 hover:text-[#e2e8f0]"
         >
           Giriş Yap

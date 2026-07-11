@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { trackMetaPurchaseOnce } from "@/lib/analytics/meta-pixel";
+import { clearCampaignDraft } from "@/lib/campaign/draft";
 
 export default function PaymentProcessingPage() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function PaymentProcessingPage() {
       contentName?: string;
       slug?: string;
     }) => {
+      clearCampaignDraft();
       if (purchaseTracked) return;
       if (!data.value || Number(data.value) <= 0) return;
 
