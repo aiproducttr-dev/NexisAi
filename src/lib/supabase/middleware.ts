@@ -6,6 +6,7 @@ import {
   isAppHost,
   isForumHost,
 } from "@/lib/constants/urls";
+import { getSafeInternalPath } from "@/lib/auth/safe-redirect";
 import { isIndexNowKeyPath } from "@/lib/indexnow/config";
 
 function shouldRewriteToForum(pathname: string): boolean {
@@ -86,16 +87,16 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    const redirect = url.searchParams.get("redirect");
-    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
-      // Kayıtlı kullanıcılar önce kampanya listesini görsün
+    const rawRedirect = url.searchParams.get("redirect");
+    const safeRedirect = getSafeInternalPath(rawRedirect, "");
+
+    if (safeRedirect) {
       url.pathname =
-        redirect === "/dashboard/new" ? "/dashboard" : redirect;
-      url.search = "";
+        safeRedirect === "/dashboard/new" ? "/dashboard" : safeRedirect;
     } else {
       url.pathname = forumSite ? "/forum" : "/dashboard";
-      url.search = "";
     }
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

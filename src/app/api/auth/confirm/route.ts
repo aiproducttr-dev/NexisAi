@@ -1,17 +1,55 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+/**
+ * Confirms the authenticated caller's own email only.
+ * Rejects anonymous or mismatched userId requests.
+ */
 export async function POST(request: Request) {
   try {
-    const { userId } = await request.json();
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: sessionError,
+    } = await supabase.auth.getUser();
 
-    if (!userId) {
+    if (sessionError || !user) {
+      return NextResponse.json({ error: "Oturum gerekli" }, { status: 401 });
+    }
+
+    const body = (await request.json().catch(() => null)) as {
+      userId?: string;
+    } | null;
+
+    const requestedUserId = body?.userId?.trim();
+
+    if (!requestedUserId) {
       return NextResponse.json({ error: "User ID gerekli" }, { status: 400 });
+    }
+
+    // Ownership check: caller may only confirm their own account
+    if (requestedUserId !== user.id) {
+      return NextResponse.json({ error: "Yetkisiz işlem" }, { status: 403 });
     }
 
     const admin = createAdminClient();
 
-    const { error } = await admin.auth.admin.updateUserById(userId, {
+    const { data: authUser, error: lookupError } =
+      await admin.auth.admin.getUserById(user.id);
+
+    if (lookupError || !authUser.user) {
+      return NextResponse.json(
+        { error: "Kullanıcı bulunamadı" },
+        { status: 404 },
+      );
+    }
+
+    if (authUser.user.email?.toLowerCase() !== user.email?.toLowerCase()) {
+      return NextResponse.json({ error: "Yetkisiz işlem" }, { status: 403 });
+    }
+
+    const { error } = await admin.auth.admin.updateUserById(user.id, {
       email_confirm: true,
     });
 

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { resolveRegistrationSource } from "@/lib/auth/registration-source";
+import { resolvePostAuthPath } from "@/lib/auth/safe-redirect";
 import { createClient } from "@/lib/supabase/client";
 import {
   trackMetaCompleteRegistration,
-  trackMetaInitiateCheckout,
 } from "@/lib/analytics/meta-pixel";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppNav from "@/components/layout/AppNav";
@@ -16,7 +16,6 @@ import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
 
 export default function AuthForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
   const redirectParam = searchParams.get("redirect") || "/dashboard";
@@ -30,14 +29,20 @@ export default function AuthForm() {
 
   const supabase = createClient();
 
-  const postAuthPath =
-    mode === "login" && redirectParam === "/dashboard/new"
-      ? "/dashboard"
-      : redirectParam;
+  const postAuthPath = resolvePostAuthPath(redirectParam, {
+    preferDashboardList: mode === "login",
+  });
 
   const registrationSource = resolveRegistrationSource({
     redirect: redirectParam,
   });
+
+  async function navigateAfterAuth(path: string) {
+    // Full navigation so middleware + Supabase cookies are applied reliably
+    // in Instagram/Facebook in-app browsers (SPA push often drops the session).
+    await supabase.auth.getSession();
+    window.location.assign(path);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,42 +63,58 @@ export default function AuthForm() {
           }),
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          throw new Error(data.error || "Kayıt oluşturulamadı");
+          throw new Error(
+            (data as { error?: string }).error || "Kayıt oluşturulamadı",
+          );
         }
 
-        const { error: loginError } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
+        const { data: signInData, error: loginError } =
+          await supabase.auth.signInWithPassword({
+            email: email.trim().toLowerCase(),
+            password,
+          });
 
         if (loginError) throw loginError;
 
+        if (!signInData.session || !signInData.user) {
+          throw new Error(
+            "Oturum açılamadı. Lütfen giriş ekranından tekrar deneyin.",
+          );
+        }
+
         trackMetaCompleteRegistration();
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
+        await navigateAfterAuth(
+          (data as { redirectTo?: string }).redirectTo || postAuthPath,
+        );
+        return;
       }
 
-      router.push(postAuthPath);
-      router.refresh();
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+      if (signInError) throw signInError;
+
+      if (!signInData.session || !signInData.user) {
+        throw new Error("Oturum açılamadı. Lütfen tekrar deneyin.");
+      }
+
+      await navigateAfterAuth(postAuthPath);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Giriş yapılırken bir hata oluştu";
 
       if (message.toLowerCase().includes("rate limit")) {
         setError(
-          "Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyin."
+          "Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyin.",
         );
       } else {
         setError(message);
       }
-    } finally {
       setLoading(false);
     }
   }
