@@ -9,6 +9,8 @@ import CheckoutFulfillmentTracker from "@/components/dashboard/CheckoutFulfillme
 import MetaPurchaseTracker from "@/components/analytics/MetaPurchaseTracker";
 import AppNav from "@/components/layout/AppNav";
 import SupportContact from "@/components/layout/SupportContact";
+import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
+import { fetchLiveCampaignStats } from "@/lib/stats/fetch-live-campaign-stats";
 
 export default async function DashboardPage({
   searchParams,
@@ -57,6 +59,13 @@ export default async function DashboardPage({
     .select("full_name")
     .eq("id", user.id)
     .single();
+
+  let liveStats = null;
+  try {
+    liveStats = await fetchLiveCampaignStats();
+  } catch (error) {
+    console.error("Live campaign stats error:", error);
+  }
 
   return (
     <>
@@ -107,6 +116,11 @@ export default async function DashboardPage({
               Kampanyalarınızı görüntüleyin ve yönetin.
             </p>
             <SupportContact align="start" className="mt-4 max-w-md" />
+            <LiveCampaignStatsCard
+              initialStats={liveStats}
+              className="mt-4 max-w-md"
+              compact
+            />
           </div>
           <Link
             href="/dashboard/new"

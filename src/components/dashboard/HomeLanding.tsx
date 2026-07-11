@@ -5,6 +5,7 @@ import { Orbitron } from "next/font/google";
 import { ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 import SupportContact from "@/components/layout/SupportContact";
+import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
 
 import FuturisticScene3D from "@/components/landing/FuturisticScene3D";
 import LandingAppFeatures from "@/components/landing/LandingAppFeatures";
@@ -70,6 +71,7 @@ export default function HomeLanding() {
             </Link>
           </div>
           <SupportContact className="mt-2 w-full max-w-md" />
+          <LiveCampaignStatsCard className="mt-1 w-full max-w-md" compact />
         </nav>
 
         <section className="grid min-h-0 items-center gap-10 pb-12 pt-2 sm:gap-12 sm:pb-16 sm:pt-4 lg:min-h-[calc(100vh-100px)] lg:grid-cols-2">

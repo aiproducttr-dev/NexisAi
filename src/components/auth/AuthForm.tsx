@@ -13,6 +13,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import AppNav from "@/components/layout/AppNav";
 import BrandLogo from "@/components/layout/BrandLogo";
 import SupportContact from "@/components/layout/SupportContact";
+import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -223,7 +224,8 @@ export default function AuthForm() {
                 )}
               </p>
 
-              <SupportContact className="mt-6" />
+              <LiveCampaignStatsCard className="mt-6" compact />
+              <SupportContact className="mt-4" />
             </div>
           </div>
         </div>
