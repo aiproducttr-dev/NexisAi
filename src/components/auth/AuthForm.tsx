@@ -100,6 +100,7 @@ export default function AuthForm() {
 
   return (
     <>
+      <SupportContact variant="topRight" belowNav />
       <AppNav
         backLink={{ href: "/", label: "Ana Sayfa" }}
         right={
@@ -225,7 +226,6 @@ export default function AuthForm() {
               </p>
 
               <LiveCampaignStatsCard className="mt-6" compact />
-              <SupportContact className="mt-4" />
             </div>
           </div>
         </div>

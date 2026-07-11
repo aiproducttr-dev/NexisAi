@@ -76,6 +76,7 @@ export default async function DashboardPage({
           contentName={createdCampaign.business_name}
         />
       )}
+      <SupportContact variant="topRight" belowNav />
       <AppNav
         logoHref="/dashboard"
         userLabel={profile?.full_name || user.email || undefined}
@@ -115,7 +116,6 @@ export default async function DashboardPage({
             <p className="mt-2 text-sm text-[#94a3b8]">
               Kampanyalarınızı görüntüleyin ve yönetin.
             </p>
-            <SupportContact align="start" className="mt-4 max-w-md" />
             <LiveCampaignStatsCard
               initialStats={liveStats}
               className="mt-4 max-w-md"

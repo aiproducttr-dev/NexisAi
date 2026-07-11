@@ -54,6 +54,7 @@ export default function HomeLanding() {
       <div className="lf-vignette" aria-hidden />
 
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SupportContact variant="topRight" />
         <nav className="lf-animate-in flex flex-col items-center gap-5 py-6 sm:py-8">
           <BrandLogo href="/" size="2xl" priority centered />
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -70,7 +71,6 @@ export default function HomeLanding() {
               Hemen Başlayın →
             </Link>
           </div>
-          <SupportContact className="mt-2 w-full max-w-md" />
           <LiveCampaignStatsCard className="mt-1 w-full max-w-md" compact />
         </nav>
 
