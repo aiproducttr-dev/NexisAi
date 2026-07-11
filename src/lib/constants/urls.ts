@@ -28,9 +28,6 @@ export function getForumBaseUrl(): string {
   return FORUM_URL;
 }
 
-/** Canonical production host (punycode apex) — cookies stay on one origin. */
-export const APP_CANONICAL_HOST = APP_DOMAIN;
-
 /** Production always resolves to the official Punycode apex domain. */
 export function getAppBaseUrl(): string {
   if (process.env.NODE_ENV === "development") {
@@ -57,16 +54,4 @@ export function isForumHost(host: string): boolean {
 export function isAppHost(host: string): boolean {
   const normalized = normalizeHost(host);
   return APP_HOSTS.some((h) => h.toLowerCase() === normalized);
-}
-
-/**
- * True when the request host is an app alias that should 308 to the
- * canonical apex so Supabase session cookies are not split across
- * www / unicode / punycode hosts.
- */
-export function shouldCanonicalizeAppHost(host: string): boolean {
-  if (process.env.NODE_ENV === "development") return false;
-  const normalized = normalizeHost(host);
-  if (!isAppHost(normalized)) return false;
-  return normalized !== APP_CANONICAL_HOST;
 }
