@@ -1,9 +1,9 @@
-import { getAppBaseUrl } from "@/lib/constants/urls";
 import { fulfillPaidCheckout } from "@/lib/iyzico/fulfill-checkout";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { after } from "next/server";
 
-export const FULFILLMENT_STALE_MS = 90 * 1000;
+/** AI + multi-channel publish regularly exceeds 90s — keep lock until job can finish. */
+export const FULFILLMENT_STALE_MS = 10 * 60 * 1000;
 
 export async function getCompletedCheckoutResult(checkoutId: string): Promise<{
   slug: string;
@@ -106,54 +106,13 @@ export async function runFulfillmentJob(checkoutId: string) {
   }
 }
 
-function getFulfillWorkerBaseUrl(): string {
-  const vercelUrl = process.env.VERCEL_URL?.trim();
-  if (vercelUrl) {
-    return `https://${vercelUrl.replace(/^https?:\/\//, "")}`;
-  }
-
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (configured && !configured.includes("localhost")) {
-    return configured;
-  }
-
-  return getAppBaseUrl();
-}
-
-function triggerFulfillWorker(checkoutId: string) {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    console.error(
-      "SUPABASE_SERVICE_ROLE_KEY missing; cannot trigger fulfillment worker",
-    );
-    return;
-  }
-
-  const baseUrl = getFulfillWorkerBaseUrl();
-
+/** Run fulfillment in this isolate after the HTTP response (mobile-safe). */
+function scheduleInlineFulfillment(checkoutId: string) {
   after(async () => {
     try {
-      const response = await fetch(`${baseUrl}/api/payments/iyzico/fulfill`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${serviceKey}`,
-        },
-        body: JSON.stringify({ checkoutId }),
-      });
-
-      if (!response.ok) {
-        const body = await response.text();
-        console.error(
-          "Fulfill worker HTTP error:",
-          response.status,
-          body.slice(0, 500),
-        );
-        await resetFulfillmentLock(checkoutId);
-      }
+      await runFulfillmentJob(checkoutId);
     } catch (error) {
-      console.error("Failed to trigger fulfillment worker:", error);
-      await resetFulfillmentLock(checkoutId);
+      console.error("Inline fulfillment after() failed:", error);
     }
   });
 }
@@ -250,7 +209,8 @@ export async function scheduleFulfillmentIfNeeded(
   }
 
   if (claimState === "claimed") {
-    triggerFulfillWorker(checkoutId);
+    // In-process after() — avoids mobile request timeout and apex→www auth strip.
+    scheduleInlineFulfillment(checkoutId);
   }
 
   return "processing";

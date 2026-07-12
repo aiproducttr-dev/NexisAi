@@ -109,6 +109,46 @@ export async function createCampaignForUser(
     productDescription,
   };
 
+  const baseSlug = slugify(`${businessName}-${city}-${category}`, {
+    lower: true,
+    strict: true,
+    locale: "tr",
+  });
+  const slug = buildSlug(businessName, city, category);
+
+  // Persist campaign immediately so paid checkouts leave the "fulfilling" spinner
+  // even if later AI/channel work is slow or the mobile request disconnects.
+  const { data: campaign, error: campaignError } = await admin
+    .from("campaigns")
+    .insert({
+      user_id: userId,
+      business_name: businessName,
+      category,
+      city,
+      product_description: productDescription,
+      daily_budget: dailyBudget,
+      days,
+      total_cost: metrics.totalCost,
+      visibility_increase: metrics.visibilityIncrease,
+      status: "active",
+      content_slug: slug,
+      started_at: now.toISOString(),
+      ends_at: endsAt.toISOString(),
+    })
+    .select()
+    .single();
+
+  if (campaignError || !campaign) {
+    throw new Error(campaignError?.message || "Kampanya kaydedilemedi");
+  }
+
+  if (options?.onCampaignReady) {
+    await options.onCampaignReady({
+      campaignId: campaign.id,
+      slug,
+    });
+  }
+
   const sitePromises = Array.from({ length: contentPlan.siteArticleCount }, () =>
     generateSiteArticle(brief),
   );
@@ -137,36 +177,6 @@ export async function createCampaignForUser(
     ]);
 
   const siteContent = siteArticles[0]!;
-  const baseSlug = slugify(`${businessName}-${city}-${category}`, {
-    lower: true,
-    strict: true,
-    locale: "tr",
-  });
-  const slug = buildSlug(businessName, city, category);
-
-  const { data: campaign, error: campaignError } = await admin
-    .from("campaigns")
-    .insert({
-      user_id: userId,
-      business_name: businessName,
-      category,
-      city,
-      product_description: productDescription,
-      daily_budget: dailyBudget,
-      days,
-      total_cost: metrics.totalCost,
-      visibility_increase: metrics.visibilityIncrease,
-      status: "active",
-      content_slug: slug,
-      started_at: now.toISOString(),
-      ends_at: endsAt.toISOString(),
-    })
-    .select()
-    .single();
-
-  if (campaignError || !campaign) {
-    throw new Error(campaignError?.message || "Kampanya kaydedilemedi");
-  }
 
   async function insertPublishedContent(
     title: string,
@@ -186,13 +196,6 @@ export async function createCampaignForUser(
   }
 
   await insertPublishedContent(siteContent.title, siteContent.content, slug);
-
-  if (options?.onCampaignReady) {
-    await options.onCampaignReady({
-      campaignId: campaign.id,
-      slug,
-    });
-  }
 
   for (let i = 1; i < siteArticles.length; i++) {
     const extra = siteArticles[i]!;

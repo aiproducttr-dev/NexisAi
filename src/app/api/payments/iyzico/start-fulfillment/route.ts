@@ -1,7 +1,7 @@
 import {
-  claimAndRunFulfillment,
   getCompletedCheckoutResult,
   repairCheckoutFulfillmentState,
+  scheduleFulfillmentIfNeeded,
 } from "@/lib/iyzico/schedule-fulfillment";
 import { reconcileCheckoutPayment } from "@/lib/iyzico/reconcile";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: checkout, error } = await admin
       .from("campaign_checkouts")
-      .select("id, user_id, payment_status")
+      .select("id, user_id, payment_status, business_name, total_cost")
       .eq("id", checkoutId)
       .single();
 
@@ -70,7 +70,10 @@ export async function POST(request: Request) {
       });
     }
 
-    const completed = await claimAndRunFulfillment(checkoutId);
+    // Non-blocking: schedule AI work via after() so mobile clients don't hang/abort.
+    await scheduleFulfillmentIfNeeded(checkoutId);
+
+    const completed = await getCompletedCheckoutResult(checkoutId);
     if (completed) {
       return NextResponse.json({
         status: "completed",
@@ -84,7 +87,13 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { status: "fulfilling", checkoutId },
+      {
+        status: "fulfilling",
+        checkoutId,
+        contentName: checkout.business_name,
+        value: Number(checkout.total_cost),
+        currency: "TRY",
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

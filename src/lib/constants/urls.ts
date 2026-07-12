@@ -3,8 +3,9 @@ export const APP_DOMAIN = "xn--nexsai-r9a.com";
 export const APP_DOMAIN_WWW = "www.xn--nexsai-r9a.com";
 export const APP_DOMAIN_UNICODE = "nexısai.com";
 export const SUPPORT_EMAIL = `support@${APP_DOMAIN_UNICODE}`;
-export const APP_URL = "https://xn--nexsai-r9a.com";
-export const APP_URL_WWW = "https://www.xn--nexsai-r9a.com";
+/** Vercel canonical host is www — apex 308s to www and strips Authorization on worker calls. */
+export const APP_URL = "https://www.xn--nexsai-r9a.com";
+export const APP_URL_WWW = APP_URL;
 
 export const APP_HOSTS = [
   APP_DOMAIN,
@@ -28,7 +29,7 @@ export function getForumBaseUrl(): string {
   return FORUM_URL;
 }
 
-/** Production always resolves to the official Punycode apex domain. */
+/** Production resolves to Vercel canonical www host. */
 export function getAppBaseUrl(): string {
   if (process.env.NODE_ENV === "development") {
     const local = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
