@@ -89,10 +89,6 @@ export default function CampaignWizard() {
         setInfo(
           "Hesabınız hazır. Kampanya bilgileriniz yüklendi — ödemeye devam edebilirsiniz.",
         );
-      } else {
-        setInfo(
-          "Bilgileriniz kaydedildi. Ödeme için kayıt olun veya giriş yapın, ardından devam edin.",
-        );
       }
     });
 
