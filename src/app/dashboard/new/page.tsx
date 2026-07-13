@@ -37,13 +37,6 @@ export default async function NewCampaignPage() {
       />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {!user && (
-          <div className="lf-animate-in lf-animate-in-1 mb-6 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4 text-sm text-cyan-100">
-            Kampanya bilgilerinizi üyeliksiz doldurabilirsiniz. Ödeme adımında
-            e-posta ile hızlı kayıt isteyeceğiz.
-          </div>
-        )}
-
         {user && campaignCount > 0 && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
