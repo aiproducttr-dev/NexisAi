@@ -66,6 +66,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className="dark">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18314149352"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18314149352');
+          `}
+        </Script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans`}
       >
