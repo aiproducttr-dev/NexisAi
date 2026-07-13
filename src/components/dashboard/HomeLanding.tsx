@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Orbitron } from "next/font/google";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
@@ -63,14 +64,26 @@ export default function HomeLanding() {
             <SupportContact />
           </div>
           <div className="flex w-full max-w-lg flex-col items-center gap-3">
-            <Link
-              href={START_HREF}
-              className="lf-btn-primary touch-target relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-center text-base font-bold tracking-wide text-white shadow-[0_0_32px_rgba(139,92,246,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_0_48px_rgba(139,92,246,0.65),0_0_80px_rgba(6,182,212,0.25)] sm:w-auto sm:min-w-[280px] sm:px-8"
-            >
-              <span className="relative z-10">
-                Hemen İşletmenizi Öne Çıkarmak İçin Tıklayın. 🚀
-              </span>
-            </Link>
+            <div className="flex w-full items-center justify-center gap-2 sm:gap-3">
+              <ArrowRight
+                className="lf-cta-arrow h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
+                strokeWidth={3.5}
+                aria-hidden
+              />
+              <Link
+                href={START_HREF}
+                className="lf-btn-primary lf-btn-breathe touch-target relative inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-center text-base font-bold tracking-wide text-white sm:flex-none sm:min-w-[280px] sm:px-8"
+              >
+                <span className="relative z-10">
+                  Hemen İşletmenizi Öne Çıkarmak İçin Tıklayın. 🚀
+                </span>
+              </Link>
+              <ArrowLeft
+                className="lf-cta-arrow lf-cta-arrow-in-left h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
+                strokeWidth={3.5}
+                aria-hidden
+              />
+            </div>
             <p className="text-sm text-[#94a3b8]">
               Zaten Hesabın Varmı?{" "}
               <Link
@@ -102,15 +115,27 @@ export default function HomeLanding() {
               Kampanyanızı başlatın, gerisini biz yönetelim.
             </p>
 
-            <div className="lf-animate-in lf-animate-in-4 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-              <Link
-                href={START_HREF}
-                className="lf-btn-primary relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold text-white transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(139,92,246,0.55),0_0_80px_rgba(6,182,212,0.2)] sm:py-4"
-              >
-                <span className="relative z-10">
-                  Hemen Yapay Zekalarda Görünür Olun⭐️
-                </span>
-              </Link>
+            <div className="lf-animate-in lf-animate-in-4 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <ArrowRight
+                  className="lf-cta-arrow h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
+                  strokeWidth={3.5}
+                  aria-hidden
+                />
+                <Link
+                  href={START_HREF}
+                  className="lf-btn-primary lf-btn-breathe relative inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-base font-bold text-white sm:flex-none sm:px-8 sm:py-4"
+                >
+                  <span className="relative z-10">
+                    Hemen Yapay Zekalarda Görünür Olun⭐️
+                  </span>
+                </Link>
+                <ArrowLeft
+                  className="lf-cta-arrow lf-cta-arrow-in-left h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
+                  strokeWidth={3.5}
+                  aria-hidden
+                />
+              </div>
               <a
                 href="#nasil-calisir"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-slate-700/40 bg-white/[0.03] px-7 py-3.5 text-sm font-semibold text-[#94a3b8] transition hover:border-cyan-500/40 hover:text-[#e2e8f0] hover:shadow-[0_0_24px_rgba(6,182,212,0.1)] sm:py-4"
