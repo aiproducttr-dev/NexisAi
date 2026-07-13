@@ -75,7 +75,7 @@ export default function HomeLanding() {
                 className="lf-btn-primary lf-btn-breathe touch-target relative inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-center text-base font-bold tracking-wide text-white sm:flex-none sm:min-w-[280px] sm:px-8"
               >
                 <span className="relative z-10">
-                  Hemen İşletmenizi Öne Çıkarmak İçin Tıklayın. 🚀
+                  Hemen İşletmenizi Öne Çıkarın. 🚀
                 </span>
               </Link>
               <ArrowLeft
