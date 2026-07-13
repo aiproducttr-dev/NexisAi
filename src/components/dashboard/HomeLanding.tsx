@@ -63,20 +63,24 @@ export default function HomeLanding() {
           <div className="w-full md:hidden">
             <SupportContact />
           </div>
-          <div className="flex w-full max-w-lg flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-            <Link
-              href={LOGIN_HREF}
-              className="touch-target inline-flex min-h-[52px] items-center justify-center rounded-xl border-2 border-cyan-400/70 bg-cyan-500/15 px-8 py-3.5 text-base font-bold tracking-wide text-cyan-50 shadow-[0_0_28px_rgba(6,182,212,0.35)] transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-500/25 hover:shadow-[0_0_40px_rgba(6,182,212,0.55)] sm:min-w-[168px]"
-            >
-              Giriş Yap
-            </Link>
+          <div className="flex w-full max-w-lg flex-col items-center gap-3">
             <Link
               href={START_HREF}
-              className="lf-btn-primary touch-target relative inline-flex min-h-[52px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold tracking-wide text-white shadow-[0_0_32px_rgba(139,92,246,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_0_48px_rgba(139,92,246,0.65),0_0_80px_rgba(6,182,212,0.25)] sm:min-w-[200px]"
+              className="lf-btn-primary touch-target relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-center text-base font-bold tracking-wide text-white shadow-[0_0_32px_rgba(139,92,246,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_0_48px_rgba(139,92,246,0.65),0_0_80px_rgba(6,182,212,0.25)] sm:w-auto sm:min-w-[280px] sm:px-8"
             >
-              <span className="relative z-10">Hemen Başlayın</span>
-              <ArrowRight className="relative z-10 h-5 w-5" />
+              <span className="relative z-10">
+                Hemen İşletmenizi Öne Çıkarın🚀
+              </span>
             </Link>
+            <p className="text-sm text-[#94a3b8]">
+              Zaten Hesabın Varmı?{" "}
+              <Link
+                href={LOGIN_HREF}
+                className="font-semibold text-cyan-400 transition hover:text-cyan-300 hover:underline"
+              >
+                Giriş Yap
+              </Link>
+            </p>
           </div>
           <LiveCampaignStatsCard className="mt-1 w-full max-w-md" compact />
         </nav>
@@ -104,8 +108,9 @@ export default function HomeLanding() {
                 href={START_HREF}
                 className="lf-btn-primary relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold text-white transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(139,92,246,0.55),0_0_80px_rgba(6,182,212,0.2)] sm:py-4"
               >
-                <span className="relative z-10">Kampanyanızı Başlatın</span>
-                <ArrowRight className="relative z-10 h-4 w-4" />
+                <span className="relative z-10">
+                  Hemen Yapay Zekalarda Görünür Olun⭐️
+                </span>
               </Link>
               <a
                 href="#nasil-calisir"
