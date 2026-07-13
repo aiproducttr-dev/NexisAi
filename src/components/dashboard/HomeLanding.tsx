@@ -68,7 +68,7 @@ export default function HomeLanding() {
               className="lf-btn-primary touch-target relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-center text-base font-bold tracking-wide text-white shadow-[0_0_32px_rgba(139,92,246,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_0_48px_rgba(139,92,246,0.65),0_0_80px_rgba(6,182,212,0.25)] sm:w-auto sm:min-w-[280px] sm:px-8"
             >
               <span className="relative z-10">
-                Hemen İşletmenizi Öne Çıkarın🚀
+                Hemen İşletmenizi Öne Çıkarmak İçin Tıklayın. 🚀
               </span>
             </Link>
             <p className="text-sm text-[#94a3b8]">
