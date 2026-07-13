@@ -9,8 +9,6 @@ import MetaPurchaseTracker from "@/components/analytics/MetaPurchaseTracker";
 import ClearCampaignDraftOnSuccess from "@/components/campaign/ClearCampaignDraftOnSuccess";
 import AppNav from "@/components/layout/AppNav";
 import SupportContact from "@/components/layout/SupportContact";
-import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
-import { fetchLiveCampaignStats } from "@/lib/stats/fetch-live-campaign-stats";
 
 export default async function DashboardPage({
   searchParams,
@@ -64,13 +62,6 @@ export default async function DashboardPage({
         .single()
     : { data: null };
 
-  let liveStats = null;
-  try {
-    liveStats = await fetchLiveCampaignStats();
-  } catch (error) {
-    console.error("Live campaign stats error:", error);
-  }
-
   return (
     <>
       {createdCampaign?.content_slug && (
@@ -120,14 +111,6 @@ export default async function DashboardPage({
           </div>
         )}
 
-        {!user && (
-          <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4 text-sm text-cyan-100">
-            Kampanyalarınızı görmek ve yönetmek için buradasınız. Kampanya
-            bilgilerini üyeliksiz doldurabilirsiniz; ödeme adımında kayıt
-            isteyeceğiz.
-          </div>
-        )}
-
         <div className="lf-animate-in lf-animate-in-2 mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-400">
@@ -139,11 +122,6 @@ export default async function DashboardPage({
             <p className="mt-2 text-sm text-[#94a3b8]">
               Kampanyalarınızı görüntüleyin ve yönetin.
             </p>
-            <LiveCampaignStatsCard
-              initialStats={liveStats}
-              className="mt-4 max-w-md"
-              compact
-            />
           </div>
           <Link
             href={newCampaignHref}
