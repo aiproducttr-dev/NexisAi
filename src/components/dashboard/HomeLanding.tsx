@@ -19,7 +19,7 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
-const START_HREF = "/dashboard";
+const START_HREF = "/dashboard/new";
 const LOGIN_HREF = "/auth?redirect=/dashboard";
 
 const STEPS = [
@@ -63,18 +63,19 @@ export default function HomeLanding() {
           <div className="w-full md:hidden">
             <SupportContact />
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex w-full max-w-lg flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <Link
               href={LOGIN_HREF}
-              className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-[#94a3b8] transition hover:border-cyan-500/40 hover:text-[#e2e8f0]"
+              className="touch-target inline-flex min-h-[52px] items-center justify-center rounded-xl border-2 border-cyan-400/70 bg-cyan-500/15 px-8 py-3.5 text-base font-bold tracking-wide text-cyan-50 shadow-[0_0_28px_rgba(6,182,212,0.35)] transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-500/25 hover:shadow-[0_0_40px_rgba(6,182,212,0.55)] sm:min-w-[168px]"
             >
               Giriş Yap
             </Link>
             <Link
               href={START_HREF}
-              className="touch-target inline-flex min-h-[44px] items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-[#e2e8f0] shadow-[0_0_20px_rgba(139,92,246,0.15)] transition hover:border-violet-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.55)] sm:shrink-0"
+              className="lf-btn-primary touch-target relative inline-flex min-h-[52px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold tracking-wide text-white shadow-[0_0_32px_rgba(139,92,246,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_0_48px_rgba(139,92,246,0.65),0_0_80px_rgba(6,182,212,0.25)] sm:min-w-[200px]"
             >
-              Hemen Başlayın →
+              <span className="relative z-10">Hemen Başlayın</span>
+              <ArrowRight className="relative z-10 h-5 w-5" />
             </Link>
           </div>
           <LiveCampaignStatsCard className="mt-1 w-full max-w-md" compact />
