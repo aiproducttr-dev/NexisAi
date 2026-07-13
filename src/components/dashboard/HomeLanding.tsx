@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Orbitron } from "next/font/google";
-import { ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
@@ -198,30 +197,6 @@ export default function HomeLanding() {
         <LandingCorporateSections />
 
         <LandingAppFeatures />
-
-        <div className="lf-animate-in lf-animate-in-2 relative mb-16 overflow-hidden rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 px-6 py-12 text-center sm:px-10">
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.08),transparent_70%)]"
-            aria-hidden
-          />
-          <h2 className="lf-orbitron relative text-xl font-bold text-white sm:text-2xl lg:text-3xl">
-            İşletmenizi Dijitalde Güçlendirin
-          </h2>
-          <p className="relative mx-auto mt-3 max-w-md text-sm text-[#94a3b8]">
-            NexisAI ile kampanyanızı bugün başlatın. Profesyonel içerik,
-            otomatik yayın ve şeffaf yönetim — hepsi tek platformda.
-          </p>
-          <p className="relative mx-auto mt-2 max-w-sm text-xs text-[#64748b]">
-            Güvenli ödeme ile kampanyanızı hemen başlatın.
-          </p>
-          <Link
-            href={START_HREF}
-            className="lf-btn-primary relative mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl px-8 py-3.5 text-base font-bold text-white transition hover:-translate-y-0.5 sm:py-4"
-          >
-            <span className="relative z-10">Ücretsiz Kayıt Olun</span>
-            <ArrowRight className="relative z-10 h-4 w-4" />
-          </Link>
-        </div>
 
         <footer className="border-t border-white/5 py-8 text-center text-xs text-[#94a3b8]">
           © {new Date().getFullYear()} NexisAI · Kurumsal Dijital Görünürlük Platformu
