@@ -57,6 +57,7 @@ export async function createCampaignForUser(
       campaignId: string;
       slug: string;
     }) => Promise<void>;
+    isFreeTrial?: boolean;
   },
 ): Promise<CreateCampaignResult> {
   const { businessName, category, city, dailyBudget, days, productDescription } =
@@ -134,6 +135,7 @@ export async function createCampaignForUser(
       content_slug: slug,
       started_at: now.toISOString(),
       ends_at: endsAt.toISOString(),
+      is_free_trial: options?.isFreeTrial === true,
     })
     .select()
     .single();

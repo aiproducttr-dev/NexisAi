@@ -13,7 +13,14 @@ const organizationSchema = {
   sameAs: ["https://nexisaiform.com"],
 };
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ trial?: string; signup?: string }>;
+}) {
+  const params = await searchParams;
+  const openTrialSignup = params.trial === "1" || params.signup === "1";
+
   return (
     <>
       <script
@@ -23,7 +30,7 @@ export default function Home() {
         }}
       />
       <div className="relative min-h-screen overflow-x-hidden bg-[#050505]">
-        <HomeLanding />
+        <HomeLanding openTrialSignup={openTrialSignup} />
       </div>
     </>
   );
