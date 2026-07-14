@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Orbitron } from "next/font/google";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
+import SignupCard from "@/components/landing/SignupCard";
 
 import FuturisticScene3D from "@/components/landing/FuturisticScene3D";
 import LandingAppFeatures from "@/components/landing/LandingAppFeatures";
@@ -19,7 +21,6 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
-const START_HREF = "/dashboard/new";
 const LOGIN_HREF = "/auth?redirect=/dashboard";
 
 const STEPS = [
@@ -46,15 +47,24 @@ const STEPS = [
   },
 ] as const;
 
-export default function HomeLanding() {
+export default function HomeLanding({
+  openSignup = false,
+}: {
+  openSignup?: boolean;
+}) {
+  const [signupOpen, setSignupOpen] = useState(openSignup);
+
   return (
-    <div className={`landing-futuristic min-h-screen overflow-x-hidden bg-[#050505] ${orbitron.variable}`}>
+    <div
+      className={`landing-futuristic min-h-screen overflow-x-hidden bg-[#050505] ${orbitron.variable}`}
+    >
       <FuturisticScene3D />
       <div className="lf-grid-overlay" aria-hidden />
       <div className="lf-vignette" aria-hidden />
 
+      <SignupCard open={signupOpen} onClose={() => setSignupOpen(false)} />
+
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Desktop fixed top-right only */}
         <div className="hidden md:block">
           <SupportContact variant="topRight" />
         </div>
@@ -70,14 +80,15 @@ export default function HomeLanding() {
                 strokeWidth={3.5}
                 aria-hidden
               />
-              <Link
-                href={START_HREF}
+              <button
+                type="button"
+                onClick={() => setSignupOpen(true)}
                 className="lf-btn-primary lf-btn-breathe touch-target relative inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-center text-base font-bold tracking-wide text-white sm:flex-none sm:min-w-[280px] sm:px-8"
               >
                 <span className="relative z-10">
-                  Hemen İşletmenizi Öne Çıkarın. 🚀
+                  İşletmenizin Önerilmesi İçin Hemen Tıklayın 🚀
                 </span>
-              </Link>
+              </button>
               <ArrowLeft
                 className="lf-cta-arrow lf-cta-arrow-in-left h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
                 strokeWidth={3.5}
@@ -122,14 +133,15 @@ export default function HomeLanding() {
                   strokeWidth={3.5}
                   aria-hidden
                 />
-                <Link
-                  href={START_HREF}
+                <button
+                  type="button"
+                  onClick={() => setSignupOpen(true)}
                   className="lf-btn-primary lf-btn-breathe relative inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-base font-bold text-white sm:flex-none sm:px-8 sm:py-4"
                 >
                   <span className="relative z-10">
-                    Hemen Yapay Zekalarda Görünür Olun⭐️
+                    Yapay Zekalarda Görünür Olmaya Hemen Başlayın ⭐️
                   </span>
-                </Link>
+                </button>
                 <ArrowLeft
                   className="lf-cta-arrow lf-cta-arrow-in-left h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
                   strokeWidth={3.5}
@@ -149,7 +161,9 @@ export default function HomeLanding() {
                 <p className="lf-orbitron lf-stat-value text-xl font-bold text-cyan-400 sm:text-2xl">
                   24
                 </p>
-                <p className="mt-1 text-xs tracking-wide text-[#94a3b8]">Sektör</p>
+                <p className="mt-1 text-xs tracking-wide text-[#94a3b8]">
+                  Sektör
+                </p>
               </div>
               <div>
                 <p className="lf-orbitron lf-stat-value text-xl font-bold text-cyan-400 sm:text-2xl">
@@ -180,15 +194,19 @@ export default function HomeLanding() {
               3 Adımda Başlayın
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#94a3b8]">
-              Kayıt olun, kampanyanızı planlayın ve yayına alın.
-              Dakikalar içinde işletmeniz dijital görünürlük kazanır.
+              Kayıt olun, kampanyanızı planlayın ve yayına alın. Dakikalar içinde
+              işletmeniz dijital görünürlük kazanır.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {STEPS.map((card, index) => {
               const delayClass =
-                index === 0 ? "lf-card-1" : index === 1 ? "lf-card-2" : "lf-card-3";
+                index === 0
+                  ? "lf-card-1"
+                  : index === 1
+                    ? "lf-card-2"
+                    : "lf-card-3";
               return (
                 <article
                   key={card.step}
@@ -205,7 +223,9 @@ export default function HomeLanding() {
                     <div className="mb-5 mt-4 flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-2xl shadow-[0_0_20px_rgba(139,92,246,0.15)]">
                       {card.icon}
                     </div>
-                    <h3 className="text-lg font-bold text-white">{card.title}</h3>
+                    <h3 className="text-lg font-bold text-white">
+                      {card.title}
+                    </h3>
                     <p className="mt-3 text-sm leading-relaxed text-[#94a3b8]">
                       {card.description}
                     </p>
@@ -224,7 +244,8 @@ export default function HomeLanding() {
         <LandingAppFeatures />
 
         <footer className="border-t border-white/5 py-8 text-center text-xs text-[#94a3b8]">
-          © {new Date().getFullYear()} NexisAI · Kurumsal Dijital Görünürlük Platformu
+          © {new Date().getFullYear()} NexisAI · Kurumsal Dijital Görünürlük
+          Platformu
         </footer>
       </div>
     </div>

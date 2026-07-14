@@ -4,7 +4,12 @@ import DashboardActions from "@/components/dashboard/DashboardActions";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-export default async function NewCampaignPage() {
+export default async function NewCampaignPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ business?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,6 +32,7 @@ export default async function NewCampaignPage() {
     : { data: [] };
 
   const campaignCount = totalCampaignCount ?? 0;
+  const initialBusinessName = params.business?.trim() || "";
 
   return (
     <>
@@ -85,7 +91,7 @@ export default async function NewCampaignPage() {
 
         <div className="lf-card-border rounded-[20px] p-[2px]">
           <div className="lf-panel p-6 sm:p-10">
-            <CampaignWizard />
+            <CampaignWizard initialBusinessName={initialBusinessName} />
           </div>
         </div>
       </main>

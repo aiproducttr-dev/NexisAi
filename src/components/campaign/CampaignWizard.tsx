@@ -27,6 +27,7 @@ import {
   trackMetaInitiateCheckout,
 } from "@/lib/analytics/meta-pixel";
 import type { Category } from "@/lib/types";
+import SignupCard from "@/components/landing/SignupCard";
 import {
   ArrowLeft,
   ArrowRight,
@@ -39,7 +40,11 @@ import {
 
 type Step = 1 | 2 | 3;
 
-export default function CampaignWizard() {
+export default function CampaignWizard({
+  initialBusinessName = "",
+}: {
+  initialBusinessName?: string;
+}) {
   const supabase = createClient();
 
   const [step, setStep] = useState<Step>(1);
@@ -49,8 +54,12 @@ export default function CampaignWizard() {
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [pendingAfterSignup, setPendingAfterSignup] = useState<
+    "step3" | "pay" | null
+  >(null);
 
-  const [businessName, setBusinessName] = useState("");
+  const [businessName, setBusinessName] = useState(initialBusinessName);
   const [category, setCategory] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [city, setCity] = useState("");
@@ -72,11 +81,14 @@ export default function CampaignWizard() {
     if (draftRestored) return;
     const draft = loadCampaignDraft();
     if (!draft) {
+      if (initialBusinessName.trim()) {
+        setBusinessName(initialBusinessName.trim());
+      }
       setDraftRestored(true);
       return;
     }
 
-    setBusinessName(draft.businessName);
+    setBusinessName(draft.businessName || initialBusinessName);
     setCategory(draft.category);
     setProductDescription(draft.productDescription || "");
     setCity(draft.city);
@@ -93,7 +105,7 @@ export default function CampaignWizard() {
     });
 
     setDraftRestored(true);
-  }, [draftRestored, supabase.auth]);
+  }, [draftRestored, supabase.auth, initialBusinessName]);
 
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
 
@@ -184,8 +196,63 @@ export default function CampaignWizard() {
     }
     setFieldErrors([]);
     setError("");
+    persistDraft(2);
+
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        setPendingAfterSignup("step3");
+        setSignupOpen(true);
+        return;
+      }
+      persistDraft(3);
+      setStep(3);
+    });
+  }
+
+  async function startPayment() {
     persistDraft(3);
-    setStep(3);
+
+    const res = await fetch("/api/payments/iyzico/initialize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessName: businessName.trim(),
+        category,
+        city,
+        dailyBudget,
+        days,
+        productDescription: isManufacturer
+          ? productDescription.trim()
+          : undefined,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Ödeme başlatılamadı");
+    }
+
+    if (data.bypass && data.redirectUrl) {
+      window.location.href = data.redirectUrl;
+      return;
+    }
+
+    if (!data.paymentPageUrl) {
+      throw new Error("Ödeme sayfası oluşturulamadı");
+    }
+
+    trackMetaInitiateCheckout({
+      value: metrics.totalCost,
+      contentName: businessName.trim(),
+      checkoutId: data.checkoutId,
+    });
+
+    if (data.checkoutId) {
+      localStorage.setItem("nexisai_checkout_id", data.checkoutId);
+    }
+
+    window.location.href = data.paymentPageUrl;
   }
 
   async function handleStartCampaign() {
@@ -202,57 +269,12 @@ export default function CampaignWizard() {
       if (!user) {
         persistDraft(3);
         setLoading(false);
-        window.location.assign(
-          "/auth?mode=register&redirect=/dashboard/new",
-        );
+        setPendingAfterSignup("pay");
+        setSignupOpen(true);
         return;
       }
 
-      persistDraft(3);
-
-      const res = await fetch("/api/payments/iyzico/initialize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          businessName: businessName.trim(),
-          category,
-          city,
-          dailyBudget,
-          days,
-          productDescription: isManufacturer
-            ? productDescription.trim()
-            : undefined,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Ödeme başlatılamadı");
-      }
-
-      // Draft stays until payment/campaign success (Cancel / back keeps form).
-
-      if (data.bypass && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-        return;
-      }
-
-      if (!data.paymentPageUrl) {
-        throw new Error("Ödeme sayfası oluşturulamadı");
-      }
-
-      trackMetaInitiateCheckout({
-        value: metrics.totalCost,
-        contentName: businessName.trim(),
-        checkoutId: data.checkoutId,
-      });
-
-      if (data.checkoutId) {
-        localStorage.setItem("nexisai_checkout_id", data.checkoutId);
-      }
-
-      window.location.href = data.paymentPageUrl;
+      await startPayment();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Kampanya başlatılamadı",
@@ -261,8 +283,44 @@ export default function CampaignWizard() {
     }
   }
 
+  function handleSignupSuccess(payload: { businessName: string }) {
+    if (payload.businessName.trim()) {
+      setBusinessName(payload.businessName.trim());
+    }
+    setSignupOpen(false);
+    setInfo("Hesabınız hazır. Kampanyanıza devam edebilirsiniz.");
+
+    const next = pendingAfterSignup;
+    setPendingAfterSignup(null);
+
+    if (next === "pay") {
+      setLoading(true);
+      void startPayment().catch((err) => {
+        setError(
+          err instanceof Error ? err.message : "Kampanya başlatılamadı",
+        );
+        setLoading(false);
+      });
+      return;
+    }
+
+    persistDraft(3);
+    setStep(3);
+  }
+
   return (
     <div className="mx-auto max-w-4xl">
+      <SignupCard
+        open={signupOpen}
+        onClose={() => {
+          setSignupOpen(false);
+          setPendingAfterSignup(null);
+        }}
+        initialBusinessName={businessName}
+        variant="checkout"
+        onSuccess={handleSignupSuccess}
+      />
+
       <div className="mb-8 flex items-center gap-4">
         {[1, 2, 3].map((s) => (
           <div key={s} className="flex items-center gap-2">
@@ -539,8 +597,9 @@ export default function CampaignWizard() {
 
           <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-100/90">
             Ödeme iyzico güvenli ödeme altyapısı ile alınır. Henüz üye
-            değilseniz bu adımda e-posta ile hızlı kayıt isteyeceğiz; ardından
-            ödemeye geçilir. Onay sonrası kampanyanız otomatik başlatılır.
+            değilseniz ödeme öncesinde e-posta ile hızlı kayıt isteyeceğiz;
+            ardından ödemeye geçilir. Onay sonrası kampanyanız otomatik
+            başlatılır.
           </div>
 
           <div className="flex gap-3">
