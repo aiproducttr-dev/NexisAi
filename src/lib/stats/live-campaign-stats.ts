@@ -22,21 +22,21 @@ export interface LiveCampaignStats {
 export const CAMPAIGN_LEADERS: CampaignLeader[] = [
   {
     rank: 1,
-    city: "Kahramanmaraş",
-    category: "Üretici Firma",
-    businessName: "Arte Bağlantı Elemanları",
+    city: "İzmir",
+    category: "Klinik & Sağlık",
+    businessName: "Smile İzmir",
   },
   {
     rank: 2,
-    city: "Kahramanmaraş",
+    city: "İstanbul",
     category: "Güvenlik filesi",
-    businessName: "Fileci İsmail",
+    businessName: "Güçlü File",
   },
   {
     rank: 3,
-    city: "Kayseri",
-    category: "Üretici Firma",
-    businessName: "EMS Demir Profil",
+    city: "Bursa",
+    category: "Veteriner",
+    businessName: "Vetorka Veteriner Kliniği",
   },
 ];
 
