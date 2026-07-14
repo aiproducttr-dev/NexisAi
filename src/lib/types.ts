@@ -4,8 +4,6 @@ export interface Profile {
   email: string | null;
   created_at: string;
   registration_source?: "nexisai" | "nexisaiform" | null;
-  used_free_trial?: boolean;
-  trial_business_name?: string | null;
 }
 
 export interface Category {
@@ -36,7 +34,6 @@ export interface Campaign {
   created_at: string;
   started_at: string | null;
   ends_at: string | null;
-  is_free_trial?: boolean;
 }
 
 export interface PublishedContent {

@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Orbitron } from "next/font/google";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/layout/BrandLogo";
 import SupportContact from "@/components/layout/SupportContact";
 import LiveCampaignStatsCard from "@/components/stats/LiveCampaignStatsCard";
-import FreeTrialSignupCard from "@/components/landing/FreeTrialSignupCard";
 
 import FuturisticScene3D from "@/components/landing/FuturisticScene3D";
 import LandingAppFeatures from "@/components/landing/LandingAppFeatures";
@@ -21,9 +19,8 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
+const START_HREF = "/dashboard/new";
 const LOGIN_HREF = "/auth?redirect=/dashboard";
-const CTA_LABEL =
-  "İşletmenizi Öne Çıkarın ve Hemen Yapay Zekada Görünür Olun";
 
 const STEPS = [
   {
@@ -49,27 +46,15 @@ const STEPS = [
   },
 ] as const;
 
-export default function HomeLanding({
-  openTrialSignup = false,
-}: {
-  openTrialSignup?: boolean;
-}) {
-  const [signupOpen, setSignupOpen] = useState(openTrialSignup);
-
+export default function HomeLanding() {
   return (
-    <div
-      className={`landing-futuristic min-h-screen overflow-x-hidden bg-[#050505] ${orbitron.variable}`}
-    >
+    <div className={`landing-futuristic min-h-screen overflow-x-hidden bg-[#050505] ${orbitron.variable}`}>
       <FuturisticScene3D />
       <div className="lf-grid-overlay" aria-hidden />
       <div className="lf-vignette" aria-hidden />
 
-      <FreeTrialSignupCard
-        open={signupOpen}
-        onClose={() => setSignupOpen(false)}
-      />
-
       <div className="lf-page mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Desktop fixed top-right only */}
         <div className="hidden md:block">
           <SupportContact variant="topRight" />
         </div>
@@ -78,20 +63,21 @@ export default function HomeLanding({
           <div className="w-full md:hidden">
             <SupportContact />
           </div>
-          <div className="flex w-full max-w-xl flex-col items-center gap-3">
+          <div className="flex w-full max-w-lg flex-col items-center gap-3">
             <div className="flex w-full items-center justify-center gap-2 sm:gap-3">
               <ArrowRight
                 className="lf-cta-arrow h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
                 strokeWidth={3.5}
                 aria-hidden
               />
-              <button
-                type="button"
-                onClick={() => setSignupOpen(true)}
-                className="lf-btn-primary lf-btn-breathe touch-target relative inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-center text-sm font-bold tracking-wide text-white sm:flex-none sm:min-w-[320px] sm:px-6 sm:text-base"
+              <Link
+                href={START_HREF}
+                className="lf-btn-primary lf-btn-breathe touch-target relative inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-center text-base font-bold tracking-wide text-white sm:flex-none sm:min-w-[280px] sm:px-8"
               >
-                <span className="relative z-10">{CTA_LABEL}</span>
-              </button>
+                <span className="relative z-10">
+                  Hemen İşletmenizi Öne Çıkarın. 🚀
+                </span>
+              </Link>
               <ArrowLeft
                 className="lf-cta-arrow lf-cta-arrow-in-left h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
                 strokeWidth={3.5}
@@ -136,13 +122,14 @@ export default function HomeLanding({
                   strokeWidth={3.5}
                   aria-hidden
                 />
-                <button
-                  type="button"
-                  onClick={() => setSignupOpen(true)}
-                  className="lf-btn-primary lf-btn-breathe relative inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-5 py-3.5 text-left text-sm font-bold text-white sm:flex-none sm:px-6 sm:py-4 sm:text-base"
+                <Link
+                  href={START_HREF}
+                  className="lf-btn-primary lf-btn-breathe relative inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-base font-bold text-white sm:flex-none sm:px-8 sm:py-4"
                 >
-                  <span className="relative z-10">{CTA_LABEL}</span>
-                </button>
+                  <span className="relative z-10">
+                    Hemen Yapay Zekalarda Görünür Olun⭐️
+                  </span>
+                </Link>
                 <ArrowLeft
                   className="lf-cta-arrow lf-cta-arrow-in-left h-8 w-8 shrink-0 text-emerald-400 sm:h-9 sm:w-9"
                   strokeWidth={3.5}
@@ -162,66 +149,82 @@ export default function HomeLanding({
                 <p className="lf-orbitron lf-stat-value text-xl font-bold text-cyan-400 sm:text-2xl">
                   24
                 </p>
-                <p className="mt-1 text-xs text-[#64748b]">Kategori</p>
+                <p className="mt-1 text-xs tracking-wide text-[#94a3b8]">Sektör</p>
               </div>
               <div>
-                <p className="lf-orbitron lf-stat-value text-xl font-bold text-violet-400 sm:text-2xl">
+                <p className="lf-orbitron lf-stat-value text-xl font-bold text-cyan-400 sm:text-2xl">
                   81
                 </p>
-                <p className="mt-1 text-xs text-[#64748b]">İl</p>
+                <p className="mt-1 text-xs tracking-wide text-[#94a3b8]">İl</p>
               </div>
               <div>
-                <p className="lf-orbitron lf-stat-value text-xl font-bold text-emerald-400 sm:text-2xl">
+                <p className="lf-orbitron lf-stat-value text-xl font-bold text-cyan-400 sm:text-2xl">
                   7/24
                 </p>
-                <p className="mt-1 text-xs text-[#64748b]">Otomasyon</p>
+                <p className="mt-1 text-xs tracking-wide text-[#94a3b8]">
+                  Otomatik Yayın
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="lf-animate-in lf-animate-in-3 relative hidden min-h-[280px] lg:block" />
+          <div className="hidden min-h-[320px] lg:block" aria-hidden />
         </section>
 
-        <section id="nasil-calisir" className="scroll-mt-24 pb-16 sm:pb-20">
-          <div className="mb-10 text-center sm:mb-12">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
+        <section className="pb-12 pt-4" id="nasil-calisir">
+          <div className="lf-animate-in mb-14 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-400 shadow-[0_0_16px_rgba(139,92,246,0.55)]">
               Süreç
             </p>
-            <h2 className="lf-orbitron mt-2 text-2xl font-bold text-white sm:text-3xl">
-              Nasıl Çalışır?
+            <h2 className="lf-orbitron mt-3 text-2xl font-bold text-white sm:text-3xl">
+              3 Adımda Başlayın
             </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#94a3b8]">
+              Kayıt olun, kampanyanızı planlayın ve yayına alın.
+              Dakikalar içinde işletmeniz dijital görünürlük kazanır.
+            </p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-3 sm:gap-6">
-            {STEPS.map((card, index) => (
-              <article
-                key={card.step}
-                className={`lf-card-border lf-animate-in lf-card-${index + 1} rounded-[20px] p-[2px]`}
-              >
-                <div className="lf-panel relative h-full overflow-hidden p-6">
-                  <p className="lf-orbitron text-xs font-bold tracking-[0.2em] text-violet-400">
-                    {card.step}
-                  </p>
-                  <div className="mb-5 mt-4 flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-2xl shadow-[0_0_20px_rgba(139,92,246,0.15)]">
-                    {card.icon}
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {STEPS.map((card, index) => {
+              const delayClass =
+                index === 0 ? "lf-card-1" : index === 1 ? "lf-card-2" : "lf-card-3";
+              return (
+                <article
+                  key={card.step}
+                  className={`lf-animate-in lf-card-border ${delayClass} rounded-[20px] p-[2px] opacity-0 transition hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(139,92,246,0.25),0_0_40px_rgba(6,182,212,0.15)]`}
+                >
+                  <div className="relative h-full overflow-hidden rounded-[18px] bg-[rgba(8,8,12,0.92)] p-8 backdrop-blur-md">
+                    <div
+                      className="pointer-events-none absolute -right-8 -top-8 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.12),transparent_70%)]"
+                      aria-hidden
+                    />
+                    <p className="lf-orbitron lf-step-num text-4xl font-extrabold opacity-35">
+                      {card.step}
+                    </p>
+                    <div className="mb-5 mt-4 flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-2xl shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                      {card.icon}
+                    </div>
+                    <h3 className="text-lg font-bold text-white">{card.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[#94a3b8]">
+                      {card.description}
+                    </p>
+                    <div className="absolute bottom-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60" />
                   </div>
-                  <h3 className="text-lg font-bold text-white">{card.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-[#94a3b8]">
-                    {card.description}
-                  </p>
-                  <div className="absolute bottom-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60" />
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </section>
 
         <SupportedAIPlatforms />
+
         <LandingCorporateSections />
+
         <LandingAppFeatures />
 
         <footer className="border-t border-white/5 py-8 text-center text-xs text-[#94a3b8]">
-          © {new Date().getFullYear()} NexisAI · Kurumsal Dijital Görünürlük
-          Platformu
+          © {new Date().getFullYear()} NexisAI · Kurumsal Dijital Görünürlük Platformu
         </footer>
       </div>
     </div>
