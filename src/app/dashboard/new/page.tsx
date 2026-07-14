@@ -3,56 +3,30 @@ import AppNav from "@/components/layout/AppNav";
 import DashboardActions from "@/components/dashboard/DashboardActions";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
-export default async function NewCampaignPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ trial?: string; business?: string }>;
-}) {
-  const params = await searchParams;
+export default async function NewCampaignPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/?trial=1");
-  }
+  const { count: totalCampaignCount } = user
+    ? await supabase
+        .from("campaigns")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+    : { count: 0 };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, used_free_trial, trial_business_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const { count: trialCampaignCount } = await supabase
-    .from("campaigns")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("is_free_trial", true);
-
-  const trialEligible =
-    Boolean(profile?.used_free_trial) && (trialCampaignCount ?? 0) === 0;
-
-  const { count: totalCampaignCount } = await supabase
-    .from("campaigns")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { data: existingCampaigns } = await supabase
-    .from("campaigns")
-    .select("id, business_name, content_slug, status, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const { data: existingCampaigns } = user
+    ? await supabase
+        .from("campaigns")
+        .select("id, business_name, content_slug, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+    : { data: [] };
 
   const campaignCount = totalCampaignCount ?? 0;
-  const initialBusinessName =
-    params.business?.trim() ||
-    profile?.trial_business_name?.trim() ||
-    profile?.full_name?.trim() ||
-    "";
 
   return (
     <>
@@ -63,7 +37,7 @@ export default async function NewCampaignPage({
       />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {campaignCount > 0 && (
+        {user && campaignCount > 0 && (
           <div className="lf-animate-in lf-animate-in-1 mb-8 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-cyan-100">
@@ -98,24 +72,20 @@ export default async function NewCampaignPage({
 
         <div className="lf-animate-in lf-animate-in-2 mb-8">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
-            {trialEligible ? "Ücretsiz Deneme" : "Kampanya Oluştur"}
+            Kampanya Oluştur
           </p>
           <h1 className="lf-orbitron mt-2 text-3xl font-bold text-white sm:text-4xl">
-            {trialEligible ? "Deneme Kampanyası" : "Yeni Kampanya"}
+            Yeni Kampanya
           </h1>
           <p className="mt-2 max-w-xl text-sm text-[#94a3b8]">
-            {trialEligible
-              ? "İşletme bilgilerinizi tamamlayın. Deneme paketi 200 TL günlük bütçe ve 1 gün ile sınırlıdır."
-              : "İşletme bilgilerinizi girin, bütçenizi belirleyin ve kampanyanızı yayına alın."}
+            İşletme bilgilerinizi girin, bütçenizi belirleyin ve kampanyanızı
+            yayına alın.
           </p>
         </div>
 
         <div className="lf-card-border rounded-[20px] p-[2px]">
           <div className="lf-panel p-6 sm:p-10">
-            <CampaignWizard
-              trialMode={trialEligible}
-              initialBusinessName={initialBusinessName}
-            />
+            <CampaignWizard />
           </div>
         </div>
       </main>
