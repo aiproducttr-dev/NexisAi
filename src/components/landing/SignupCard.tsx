@@ -185,9 +185,6 @@ export default function SignupCard({
             <li className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
               🎁 %100 Hızlı Başlangıç
             </li>
-            <li className="rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3.5 py-2.5">
-              💳 Bu adımda kredi kartı gerekmez.
-            </li>
             <li className="rounded-xl border border-violet-500/25 bg-violet-500/10 px-3.5 py-2.5">
               ⏱️ Kurulum sadece 10 saniye sürer.
             </li>

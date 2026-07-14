@@ -50,7 +50,6 @@ export default function CampaignWizard({
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -96,16 +95,8 @@ export default function CampaignWizard({
     setDays(draft.days || DAYS_MIN);
     setStep(draft.step || 3);
 
-    void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setInfo(
-          "Hesabınız hazır. Kampanya bilgileriniz yüklendi — ödemeye devam edebilirsiniz.",
-        );
-      }
-    });
-
     setDraftRestored(true);
-  }, [draftRestored, supabase.auth, initialBusinessName]);
+  }, [draftRestored, initialBusinessName]);
 
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
 
@@ -258,7 +249,6 @@ export default function CampaignWizard({
   async function handleStartCampaign() {
     setLoading(true);
     setError("");
-    setInfo("");
     setFieldErrors([]);
 
     try {
@@ -288,7 +278,6 @@ export default function CampaignWizard({
       setBusinessName(payload.businessName.trim());
     }
     setSignupOpen(false);
-    setInfo("Hesabınız hazır. Kampanyanıza devam edebilirsiniz.");
 
     const next = pendingAfterSignup;
     setPendingAfterSignup(null);
@@ -370,12 +359,6 @@ export default function CampaignWizard({
               <li key={msg}>{msg}</li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {info && (
-        <div className="mb-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
-          {info}
         </div>
       )}
 
@@ -593,13 +576,6 @@ export default function CampaignWizard({
                 Kampanya toplamı +%{metrics.visibilityIncrease}
               </p>
             </div>
-          </div>
-
-          <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-100/90">
-            Ödeme iyzico güvenli ödeme altyapısı ile alınır. Henüz üye
-            değilseniz ödeme öncesinde e-posta ile hızlı kayıt isteyeceğiz;
-            ardından ödemeye geçilir. Onay sonrası kampanyanız otomatik
-            başlatılır.
           </div>
 
           <div className="flex gap-3">
