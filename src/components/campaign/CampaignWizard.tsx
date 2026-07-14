@@ -14,6 +14,10 @@ import {
   calculateVisibilityMetrics,
   formatCurrency,
 } from "@/lib/constants/metrics";
+import {
+  FREE_TRIAL_DAILY_BUDGET,
+  FREE_TRIAL_DAYS,
+} from "@/lib/auth/free-trial";
 import MetricsPreview, {
   BudgetSlider,
   DaysSlider,
@@ -22,6 +26,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   loadCampaignDraft,
   saveCampaignDraft,
+  clearCampaignDraft,
 } from "@/lib/campaign/draft";
 import {
   trackMetaInitiateCheckout,
@@ -39,7 +44,13 @@ import {
 
 type Step = 1 | 2 | 3;
 
-export default function CampaignWizard() {
+export default function CampaignWizard({
+  trialMode = false,
+  initialBusinessName = "",
+}: {
+  trialMode?: boolean;
+  initialBusinessName?: string;
+}) {
   const supabase = createClient();
 
   const [step, setStep] = useState<Step>(1);
@@ -50,12 +61,14 @@ export default function CampaignWizard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
 
-  const [businessName, setBusinessName] = useState("");
+  const [businessName, setBusinessName] = useState(initialBusinessName);
   const [category, setCategory] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [city, setCity] = useState("");
-  const [dailyBudget, setDailyBudget] = useState(BUDGET_MIN);
-  const [days, setDays] = useState(DAYS_MIN);
+  const [dailyBudget, setDailyBudget] = useState(
+    trialMode ? FREE_TRIAL_DAILY_BUDGET : BUDGET_MIN,
+  );
+  const [days, setDays] = useState(trialMode ? FREE_TRIAL_DAYS : DAYS_MIN);
 
   useEffect(() => {
     async function loadCategories() {
@@ -70,13 +83,30 @@ export default function CampaignWizard() {
 
   useEffect(() => {
     if (draftRestored) return;
-    const draft = loadCampaignDraft();
-    if (!draft) {
+
+    if (trialMode) {
+      setDailyBudget(FREE_TRIAL_DAILY_BUDGET);
+      setDays(FREE_TRIAL_DAYS);
+      if (initialBusinessName.trim()) {
+        setBusinessName(initialBusinessName.trim());
+      }
+      setInfo(
+        `🎁 Ücretsiz deneme: ${FREE_TRIAL_DAILY_BUDGET} TL bütçe · ${FREE_TRIAL_DAYS} gün. Kart bilgisi gerekmez.`,
+      );
       setDraftRestored(true);
       return;
     }
 
-    setBusinessName(draft.businessName);
+    const draft = loadCampaignDraft();
+    if (!draft) {
+      if (initialBusinessName.trim()) {
+        setBusinessName(initialBusinessName.trim());
+      }
+      setDraftRestored(true);
+      return;
+    }
+
+    setBusinessName(draft.businessName || initialBusinessName);
     setCategory(draft.category);
     setProductDescription(draft.productDescription || "");
     setCity(draft.city);
@@ -93,7 +123,7 @@ export default function CampaignWizard() {
     });
 
     setDraftRestored(true);
-  }, [draftRestored, supabase.auth]);
+  }, [draftRestored, supabase.auth, trialMode, initialBusinessName]);
 
   const metrics = calculateVisibilityMetrics(dailyBudget, days);
 
@@ -154,6 +184,7 @@ export default function CampaignWizard() {
   }
 
   function getStep2Errors(): string[] {
+    if (trialMode) return [];
     const errors: string[] = [];
     if (dailyBudget < BUDGET_MIN) {
       errors.push(`Günlük bütçe en az ${BUDGET_MIN} TL olmalıdır.`);
@@ -172,11 +203,19 @@ export default function CampaignWizard() {
     }
     setFieldErrors([]);
     setError("");
+    if (trialMode) {
+      setDailyBudget(FREE_TRIAL_DAILY_BUDGET);
+      setDays(FREE_TRIAL_DAYS);
+    }
     persistDraft(2);
     setStep(2);
   }
 
   function goToStep3() {
+    if (trialMode) {
+      setDailyBudget(FREE_TRIAL_DAILY_BUDGET);
+      setDays(FREE_TRIAL_DAYS);
+    }
     const errors = getStep2Errors();
     if (errors.length) {
       setFieldErrors(errors);
@@ -200,15 +239,39 @@ export default function CampaignWizard() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        persistDraft(3);
         setLoading(false);
-        window.location.assign(
-          "/auth?mode=register&redirect=/dashboard/new",
-        );
+        window.location.assign("/?trial=1");
         return;
       }
 
       persistDraft(3);
+
+      if (trialMode) {
+        const res = await fetch("/api/campaigns/free-trial", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessName: businessName.trim(),
+            category,
+            city,
+            dailyBudget: FREE_TRIAL_DAILY_BUDGET,
+            days: FREE_TRIAL_DAYS,
+            productDescription: isManufacturer
+              ? productDescription.trim()
+              : undefined,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Deneme kampanyası oluşturulamadı");
+        }
+
+        clearCampaignDraft();
+        window.location.href =
+          data.redirectUrl || `/dashboard?created=${data.slug}`;
+        return;
+      }
 
       const res = await fetch("/api/payments/iyzico/initialize", {
         method: "POST",
@@ -437,20 +500,50 @@ export default function CampaignWizard() {
             <h2 className="lf-orbitron text-xl font-bold text-white sm:text-2xl">
               Bütçe & Süre
             </h2>
-            <BudgetSlider
-              value={dailyBudget}
-              onChange={(v) => {
-                setDailyBudget(v);
-                if (fieldErrors.length) setFieldErrors([]);
-              }}
-            />
-            <DaysSlider
-              value={days}
-              onChange={(v) => {
-                setDays(v);
-                if (fieldErrors.length) setFieldErrors([]);
-              }}
-            />
+
+            {trialMode ? (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-50">
+                  🎁 Ücretsiz deneme hakkınız: En fazla{" "}
+                  {FREE_TRIAL_DAILY_BUDGET} TL bütçe ve {FREE_TRIAL_DAYS} gün
+                  kullanım süresi ile sınırlıdır.
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full w-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-xs text-[#64748b]">Günlük Bütçe</p>
+                    <p className="lf-orbitron mt-1 text-xl font-bold text-white">
+                      {formatCurrency(FREE_TRIAL_DAILY_BUDGET)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-xs text-[#64748b]">Süre</p>
+                    <p className="lf-orbitron mt-1 text-xl font-bold text-white">
+                      {FREE_TRIAL_DAYS} gün
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <BudgetSlider
+                  value={dailyBudget}
+                  onChange={(v) => {
+                    setDailyBudget(v);
+                    if (fieldErrors.length) setFieldErrors([]);
+                  }}
+                />
+                <DaysSlider
+                  value={days}
+                  onChange={(v) => {
+                    setDays(v);
+                    if (fieldErrors.length) setFieldErrors([]);
+                  }}
+                />
+              </>
+            )}
 
             <div className="flex gap-3">
               <button
@@ -538,9 +631,9 @@ export default function CampaignWizard() {
           </div>
 
           <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-100/90">
-            Ödeme iyzico güvenli ödeme altyapısı ile alınır. Henüz üye
-            değilseniz bu adımda e-posta ile hızlı kayıt isteyeceğiz; ardından
-            ödemeye geçilir. Onay sonrası kampanyanız otomatik başlatılır.
+            {trialMode
+              ? "Ücretsiz denemeniz kart bilgisi olmadan başlar. Onay sonrası kampanyanız otomatik oluşturulur."
+              : "Ödeme iyzico güvenli ödeme altyapısı ile alınır. Onay sonrası kampanyanız otomatik başlatılır."}
           </div>
 
           <div className="flex gap-3">
@@ -569,7 +662,9 @@ export default function CampaignWizard() {
                 </>
               ) : (
                 <span className="relative z-10">
-                  Ödeme Yap ve Başlat ({formatCurrency(metrics.totalCost)})
+                  {trialMode
+                    ? `Ücretsiz Denemeyi Başlat (${formatCurrency(metrics.totalCost)})`
+                    : `Ödeme Yap ve Başlat (${formatCurrency(metrics.totalCost)})`}
                 </span>
               )}
             </button>
