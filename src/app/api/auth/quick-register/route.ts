@@ -98,6 +98,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const { error: sonKayitError } = await admin
+      .from("nexisai_son_kayitlar")
+      .insert({
+        user_id: userId,
+        email,
+        business_name: businessName,
+        registration_source: source,
+      });
+
+    if (sonKayitError) {
+      console.error("nexisai_son_kayitlar insert failed:", sonKayitError);
+    }
+
     return NextResponse.json({
       success: true,
       email,
